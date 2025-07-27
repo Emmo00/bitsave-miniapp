@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
-import { Button } from "~/components/ui/button"
-import { Input } from "~/components/ui/input"
-import { Label } from "~/components/ui/label"
-import { Badge } from "~/components/ui/badge"
-import { Progress } from "~/components/ui/progress"
-import { ArrowLeft, PiggyBank, Coins, CheckCircle } from "lucide-react"
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Badge } from "~/components/ui/badge";
+import { Progress } from "~/components/ui/progress";
+import { ArrowLeft, PiggyBank, Coins, CheckCircle } from "lucide-react";
 
 export default function TopUpVault() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const vaultId = searchParams.get("vault")
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const vaultId = searchParams.get("vault");
 
-  const [amount, setAmount] = useState("")
-  const [step, setStep] = useState(1) // 1: input, 2: confirm, 3: success
+  const [amount, setAmount] = useState("");
+  const [step, setStep] = useState(1); // 1: input, 2: confirm, 3: success
 
   // Mock vault data - in real app, fetch based on vaultId
   const vault = {
@@ -28,22 +28,22 @@ export default function TopUpVault() {
     rewards: 12.3,
     token: "USDC",
     network: "Base",
-  }
+  };
 
   const handleConfirm = () => {
-    setStep(2)
-  }
+    setStep(2);
+  };
 
   const handleTopUp = () => {
-    setStep(3)
-  }
+    setStep(3);
+  };
 
   const handleComplete = () => {
-    router.push("/my-vaults")
-  }
+    router.push("/my-vaults");
+  };
 
-  const newTotal = vault.saved + Number.parseFloat(amount || "0")
-  const newProgress = (newTotal / vault.target) * 100
+  const newTotal = vault.saved + Number.parseFloat(amount || "0");
+  const newProgress = (newTotal / vault.target) * 100;
 
   if (step === 3) {
     return (
@@ -103,7 +103,7 @@ export default function TopUpVault() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (step === 2) {
@@ -172,7 +172,9 @@ export default function TopUpVault() {
                     </span>
                   </div>
                   <Progress value={newProgress} className="h-3" />
-                  <div className="text-center text-sm text-gray-600">{newProgress.toFixed(1)}% complete</div>
+                  <div className="text-center text-sm text-gray-600">
+                    {newProgress.toFixed(1)}% complete
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -189,7 +191,7 @@ export default function TopUpVault() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -240,7 +242,9 @@ export default function TopUpVault() {
             <div className="space-y-2">
               <Label htmlFor="amount">Top Up Amount</Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  $
+                </span>
                 <Input
                   id="amount"
                   type="number"
@@ -299,5 +303,5 @@ export default function TopUpVault() {
         </div>
       </div>
     </div>
-  )
+  );
 }

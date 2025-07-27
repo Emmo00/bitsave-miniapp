@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { Button } from "~/components/ui/button"
-import { Card, CardContent } from "~/components/ui/card"
-import { Badge } from "~/components/ui/badge"
-import { PiggyBank, Trophy, Bell, ArrowRight, Sparkles, TrendingUp } from "lucide-react"
+import { useRouter } from "next/navigation";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import { PiggyBank, Trophy, Bell, ArrowRight, Sparkles, TrendingUp } from "lucide-react";
 
 export default function LandingPage() {
-  const router = useRouter()
+  const router = useRouter();
 
   const handleGetStarted = () => {
-    localStorage.setItem("bitsave-logged-in", "true")
-    router.push("/dashboard")
-  }
+    localStorage.setItem("bitsave-logged-in", "true");
+    router.push("/dashboard");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-green-50 to-yellow-50">
@@ -29,7 +29,8 @@ export default function LandingPage() {
             <h1 className="text-3xl font-bold text-gray-900">Bitsave</h1>
             <p className="text-xl font-semibold text-purple-600">Save while you earn onchain</p>
             <p className="text-gray-600 text-sm max-w-sm mx-auto">
-              Automatically stash away a portion of your Farcaster earnings and watch your vault grow.
+              Automatically stash away a portion of your Farcaster earnings and watch your vault
+              grow.
             </p>
             <Button
               onClick={handleGetStarted}
@@ -84,7 +85,9 @@ export default function LandingPage() {
                   <div className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
                     1
                   </div>
-                  <p className="text-sm text-gray-700">Connect your wallet and create a savings vault</p>
+                  <p className="text-sm text-gray-700">
+                    Connect your wallet and create a savings vault
+                  </p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
@@ -116,5 +119,5 @@ export default function LandingPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -66,9 +66,7 @@ export default function VaultCreation() {
                   id="name"
                   placeholder="e.g., Creator Equipment Fund"
                   value={vaultData.name}
-                  onChange={(e) =>
-                    setVaultData({ ...vaultData, name: e.target.value })
-                  }
+                  onChange={(e) => setVaultData({ ...vaultData, name: e.target.value })}
                   className="rounded-xl"
                 />
               </div>
@@ -77,9 +75,7 @@ export default function VaultCreation() {
                 <Label>Network</Label>
                 <Select
                   value={vaultData.network}
-                  onValueChange={(value) =>
-                    setVaultData({ ...vaultData, network: value })
-                  }
+                  onValueChange={(value) => setVaultData({ ...vaultData, network: value })}
                 >
                   <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Select network" />
@@ -95,9 +91,7 @@ export default function VaultCreation() {
                 <Label>Token to Save</Label>
                 <Select
                   value={vaultData.token}
-                  onValueChange={(value) =>
-                    setVaultData({ ...vaultData, token: value })
-                  }
+                  onValueChange={(value) => setVaultData({ ...vaultData, token: value })}
                 >
                   <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Select token" />
@@ -137,9 +131,7 @@ export default function VaultCreation() {
                 <Label>Duration: {vaultData.duration[0]} months</Label>
                 <Slider
                   value={vaultData.duration}
-                  onValueChange={(value) =>
-                    setVaultData({ ...vaultData, duration: value })
-                  }
+                  onValueChange={(value) => setVaultData({ ...vaultData, duration: value })}
                   max={24}
                   min={1}
                   step={1}
@@ -157,9 +149,7 @@ export default function VaultCreation() {
                   id="penalty"
                   placeholder="5"
                   value={vaultData.penalty}
-                  onChange={(e) =>
-                    setVaultData({ ...vaultData, penalty: e.target.value })
-                  }
+                  onChange={(e) => setVaultData({ ...vaultData, penalty: e.target.value })}
                   className="rounded-xl"
                 />
                 <p className="text-xs text-gray-500">
@@ -172,13 +162,11 @@ export default function VaultCreation() {
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center space-x-2">
                   <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                  <span className="text-sm font-medium text-yellow-800">
-                    Early Withdrawal
-                  </span>
+                  <span className="text-sm font-medium text-yellow-800">Early Withdrawal</span>
                 </div>
                 <p className="text-xs text-yellow-700">
-                  Withdrawing before {vaultData.duration[0]} months will incur a{" "}
-                  {vaultData.penalty}% penalty
+                  Withdrawing before {vaultData.duration[0]} months will incur a {vaultData.penalty}
+                  % penalty
                 </p>
               </CardContent>
             </Card>
@@ -202,15 +190,11 @@ export default function VaultCreation() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Name:</span>
-                    <span className="font-medium">
-                      {vaultData.name || "Unnamed Vault"}
-                    </span>
+                    <span className="font-medium">{vaultData.name || "Unnamed Vault"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Token:</span>
-                    <Badge variant="secondary">
-                      {vaultData.token?.toUpperCase()}
-                    </Badge>
+                    <Badge variant="secondary">{vaultData.token?.toUpperCase()}</Badge>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Network:</span>
@@ -218,39 +202,29 @@ export default function VaultCreation() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Duration:</span>
-                    <span className="font-medium">
-                      {vaultData.duration[0]} months
-                    </span>
+                    <span className="font-medium">{vaultData.duration[0]} months</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">End Date:</span>
-                    <span className="font-medium">
-                      {endDate.toLocaleDateString()}
-                    </span>
+                    <span className="font-medium">{endDate.toLocaleDateString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Penalty:</span>
-                    <span className="font-medium text-red-600">
-                      {vaultData.penalty}%
-                    </span>
+                    <span className="font-medium text-red-600">{vaultData.penalty}%</span>
                   </div>
                 </div>
 
                 <Separator />
 
                 <div className="space-y-2">
-                  <h4 className="font-medium text-gray-900">
-                    Estimated Rewards
-                  </h4>
+                  <h4 className="font-medium text-gray-900">Estimated Rewards</h4>
                   <div className="flex items-center space-x-2">
                     <Coins className="w-4 h-4 text-yellow-500" />
                     <span className="text-lg font-bold text-green-600">
                       ~{(vaultData.duration[0] * 2.5).toFixed(1)} $BTS
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    Based on average savings and duration
-                  </p>
+                  <p className="text-xs text-gray-500">Based on average savings and duration</p>
                 </div>
               </CardContent>
             </Card>
@@ -258,13 +232,8 @@ export default function VaultCreation() {
             <Card className="border-green-200 bg-green-50/50">
               <CardContent className="p-4 text-center space-y-2">
                 <h4 className="font-medium text-green-800">Ready to Share?</h4>
-                <p className="text-sm text-green-700">
-                  "I just started saving with Bitsave 🎉"
-                </p>
-                <Badge
-                  variant="secondary"
-                  className="bg-green-100 text-green-700"
-                >
+                <p className="text-sm text-green-700">"I just started saving with Bitsave 🎉"</p>
+                <Badge variant="secondary" className="bg-green-100 text-green-700">
                   Cast Preview
                 </Badge>
               </CardContent>
@@ -287,9 +256,7 @@ export default function VaultCreation() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-gray-900">
-                Create Savings Vault
-              </h1>
+              <h1 className="text-xl font-bold text-gray-900">Create Savings Vault</h1>
               <p className="text-sm text-gray-600">
                 Step {step} of {totalSteps}
               </p>
@@ -312,11 +279,7 @@ export default function VaultCreation() {
           {/* Actions */}
           <div className="flex space-x-4">
             {step > 1 && (
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                className="flex-1 bg-transparent"
-              >
+              <Button variant="outline" onClick={handleBack} className="flex-1 bg-transparent">
                 Back
               </Button>
             )}
@@ -324,18 +287,12 @@ export default function VaultCreation() {
               <Button
                 onClick={handleNext}
                 className="flex-1 bg-purple-500 hover:bg-purple-600"
-                disabled={
-                  step === 1 &&
-                  (!vaultData.name || !vaultData.token || !vaultData.network)
-                }
+                disabled={step === 1 && (!vaultData.name || !vaultData.token || !vaultData.network)}
               >
                 Next
               </Button>
             ) : (
-              <Button
-                onClick={handleCreate}
-                className="flex-1 bg-green-500 hover:bg-green-600"
-              >
+              <Button onClick={handleCreate} className="flex-1 bg-green-500 hover:bg-green-600">
                 Create Vault 🎉
               </Button>
             )}

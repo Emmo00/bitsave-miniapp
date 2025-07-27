@@ -1,20 +1,16 @@
 function isAndroid(): boolean {
-  return (
-    typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent)
-  );
+  return typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
 }
 
 function isSmallIOS(): boolean {
-  return (
-    typeof navigator !== 'undefined' && /iPhone|iPod/.test(navigator.userAgent)
-  );
+  return typeof navigator !== "undefined" && /iPhone|iPod/.test(navigator.userAgent);
 }
 
 function isLargeIOS(): boolean {
   return (
-    typeof navigator !== 'undefined' &&
+    typeof navigator !== "undefined" &&
     (/iPad/.test(navigator.userAgent) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1))
   );
 }
 

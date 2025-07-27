@@ -1,7 +1,4 @@
-import {
-  SendNotificationRequest,
-  sendNotificationResponseSchema,
-} from "@farcaster/miniapp-sdk";
+import { SendNotificationRequest, sendNotificationResponseSchema } from "@farcaster/miniapp-sdk";
 import { getUserNotificationDetails } from "~/lib/kv";
 import { APP_URL } from "./constants";
 

@@ -44,9 +44,9 @@ Bitsave is a Farcaster MiniApp that helps creators automatically save a portion 
 ```bash
 git clone https://github.com/your-username/bitsave-miniapp.git
 cd bitsave-miniapp
-pnpm install
-pnpm dev
-````
+npm install
+npm run dev
+```
 
 > Ensure you have a `.env` file configured with necessary API keys and contract addresses.
 

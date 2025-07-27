@@ -5,25 +5,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "~/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Progress } from "~/components/ui/progress";
-import {
-  ArrowLeft,
-  Bell,
-  TrendingUp,
-  Coins,
-  Users,
-  Target,
-  PiggyBank,
-  Plus,
-} from "lucide-react";
+import { ArrowLeft, Bell, TrendingUp, Coins, Users, Target, PiggyBank, Plus } from "lucide-react";
 
 interface Notification {
   id: number;
@@ -40,8 +26,7 @@ export default function NotificationsPanel() {
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [selectedNotification, setSelectedNotification] =
-    useState<Notification | null>(null);
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const [saveAmount, setSaveAmount] = useState("");
   const [selectedVault, setSelectedVault] = useState<string>("");
 
@@ -116,27 +101,17 @@ export default function NotificationsPanel() {
         <div className="p-6 space-y-6 pb-24">
           {/* Header */}
           <div className="flex items-center space-x-4">
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={() => router.push("/dashboard")}
-            >
+            <Button variant="secondary" size="icon" onClick={() => router.push("/dashboard")}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
               <h1 className="text-xl font-bold text-gray-900">Notifications</h1>
-              <p className="text-sm text-gray-600">
-                Stay updated on your savings journey
-              </p>
+              <p className="text-sm text-gray-600">Stay updated on your savings journey</p>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() =>
-                setNotifications((prev) =>
-                  prev.map((n) => ({ ...n, read: true }))
-                )
-              }
+              onClick={() => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))}
               className="text-purple-600"
             >
               Mark all read
@@ -150,12 +125,8 @@ export default function NotificationsPanel() {
                 <CardContent className="p-8 text-center space-y-4">
                   <Bell className="w-12 h-12 text-gray-400 mx-auto" />
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-gray-900">
-                      All caught up!
-                    </h3>
-                    <p className="text-gray-600 text-sm">
-                      No new notifications right now
-                    </p>
+                    <h3 className="font-semibold text-gray-900">All caught up!</h3>
+                    <p className="text-gray-600 text-sm">No new notifications right now</p>
                   </div>
                 </CardContent>
               </Card>
@@ -164,9 +135,7 @@ export default function NotificationsPanel() {
                 <Card
                   key={notification.id}
                   className={`${
-                    !notification.read
-                      ? "border-purple-200 bg-purple-50/30"
-                      : "border-gray-200"
+                    !notification.read ? "border-purple-200 bg-purple-50/30" : "border-gray-200"
                   } hover:shadow-md transition-shadow`}
                 >
                   <CardContent className="p-4 space-y-3">
@@ -177,12 +146,8 @@ export default function NotificationsPanel() {
                       <div className="flex-1 space-y-2">
                         <div className="flex items-start justify-between">
                           <div className="space-y-1">
-                            <h4 className="font-medium text-gray-900">
-                              {notification.title}
-                            </h4>
-                            <p className="text-sm text-gray-700">
-                              {notification.message}
-                            </p>
+                            <h4 className="font-medium text-gray-900">{notification.title}</h4>
+                            <p className="text-sm text-gray-700">{notification.message}</p>
                           </div>
                           <div className="flex items-center space-x-2">
                             {!notification.read && (
@@ -194,38 +159,36 @@ export default function NotificationsPanel() {
                           </div>
                         </div>
 
-                        {notification.actionable &&
-                          notification.type === "weekly_earnings" && (
-                            <div className="flex items-center space-x-2 pt-2">
-                              <Button
-                                size="sm"
-                                onClick={() => handleSaveNow(notification)}
-                                className="bg-green-500 hover:bg-green-600 text-white"
-                              >
-                                💾 Save Now (${notification.suggestedAmount})
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => router.push("/notifications")}
-                                className="bg-transparent"
-                              >
-                                View Details
-                              </Button>
-                            </div>
-                          )}
+                        {notification.actionable && notification.type === "weekly_earnings" && (
+                          <div className="flex items-center space-x-2 pt-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleSaveNow(notification)}
+                              className="bg-green-500 hover:bg-green-600 text-white"
+                            >
+                              💾 Save Now (${notification.suggestedAmount})
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => router.push("/notifications")}
+                              className="bg-transparent"
+                            >
+                              View Details
+                            </Button>
+                          </div>
+                        )}
 
-                        {notification.actionable &&
-                          notification.type === "bts_reward" && (
-                            <div className="pt-2">
-                              <Button
-                                size="sm"
-                                className="bg-yellow-500 hover:bg-yellow-600 text-white"
-                              >
-                                🎉 Claim Reward
-                              </Button>
-                            </div>
-                          )}
+                        {notification.actionable && notification.type === "bts_reward" && (
+                          <div className="pt-2">
+                            <Button
+                              size="sm"
+                              className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                            >
+                              🎉 Claim Reward
+                            </Button>
+                          </div>
+                        )}
 
                         {notification.type === "vault_milestone" && (
                           <div className="pt-2">
@@ -255,8 +218,7 @@ export default function NotificationsPanel() {
                 <span>Stay on Track</span>
               </h4>
               <p className="text-sm text-gray-700">
-                Enable notifications to never miss earning opportunities and
-                savings reminders.
+                Enable notifications to never miss earning opportunities and savings reminders.
               </p>
               <div className="flex space-x-2">
                 <Button size="sm" variant="outline" className="bg-transparent">
@@ -300,9 +262,7 @@ export default function NotificationsPanel() {
                     placeholder="0.00"
                   />
                 </div>
-                <p className="text-xs text-gray-500">
-                  Suggested: 30% of your weekly earnings
-                </p>
+                <p className="text-xs text-gray-500">Suggested: 30% of your weekly earnings</p>
               </div>
 
               <div className="space-y-3">
@@ -332,10 +292,7 @@ export default function NotificationsPanel() {
                             <span>Current: ${vault.saved}</span>
                             <span>Target: ${vault.target}</span>
                           </div>
-                          <Progress
-                            value={(vault.saved / vault.target) * 100}
-                            className="h-1"
-                          />
+                          <Progress value={(vault.saved / vault.target) * 100} className="h-1" />
                         </div>
                       </CardContent>
                     </Card>
@@ -397,8 +354,7 @@ function getNotifications() {
       id: 3,
       type: "social_motivator",
       title: "Friend Activity 👥",
-      message:
-        "cryptosaver.eth just saved $50 on Bitsave! Keep up the momentum.",
+      message: "cryptosaver.eth just saved $50 on Bitsave! Keep up the momentum.",
       timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
       read: true,
       actionable: false,

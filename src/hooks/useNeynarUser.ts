@@ -35,4 +35,4 @@ export function useNeynarUser(context?: { user?: { fid?: number } }) {
   }, [context?.user?.fid]);
 
   return { user, loading, error };
-} 
+}

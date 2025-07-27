@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { Button } from "~/components/ui/button"
-import { Card, CardContent } from "~/components/ui/card"
-import { Badge } from "~/components/ui/badge"
-import { Progress } from "~/components/ui/progress"
-import { ArrowLeft, PiggyBank, Coins, TrendingUp, Plus } from "lucide-react"
-import { BottomNav } from "~/components/bottom-nav"
+import { useRouter } from "next/navigation";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import { Progress } from "~/components/ui/progress";
+import { ArrowLeft, PiggyBank, Coins, TrendingUp, Plus } from "lucide-react";
+import { BottomNav } from "~/components/bottom-nav";
 
 export default function MyVaults() {
-  const router = useRouter()
+  const router = useRouter();
 
   const mockVaults = [
     {
@@ -51,10 +51,10 @@ export default function MyVaults() {
       endDate: "2024-06-01",
       daysLeft: 0,
     },
-  ]
+  ];
 
-  const activeVaults = mockVaults.filter((v) => v.status === "active")
-  const completedVaults = mockVaults.filter((v) => v.status === "completed")
+  const activeVaults = mockVaults.filter((v) => v.status === "active");
+  const completedVaults = mockVaults.filter((v) => v.status === "completed");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-green-50 to-yellow-50">
@@ -186,7 +186,9 @@ export default function MyVaults() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-1 text-sm">
                         <Coins className="w-4 h-4 text-yellow-500" />
-                        <span className="text-green-600 font-medium">+{vault.rewards} $BTS earned</span>
+                        <span className="text-green-600 font-medium">
+                          +{vault.rewards} $BTS earned
+                        </span>
                       </div>
                       <Button size="sm" className="bg-green-500 hover:bg-green-600 text-xs">
                         Claim Rewards
@@ -205,9 +207,14 @@ export default function MyVaults() {
                 <PiggyBank className="w-12 h-12 text-gray-400 mx-auto" />
                 <div className="space-y-2">
                   <h3 className="font-semibold text-gray-900">No vaults yet</h3>
-                  <p className="text-gray-600 text-sm">Create your first savings vault to get started</p>
+                  <p className="text-gray-600 text-sm">
+                    Create your first savings vault to get started
+                  </p>
                 </div>
-                <Button onClick={() => router.push("/create-vault")} className="bg-purple-500 hover:bg-purple-600">
+                <Button
+                  onClick={() => router.push("/create-vault")}
+                  className="bg-purple-500 hover:bg-purple-600"
+                >
                   Create Your First Vault
                 </Button>
               </CardContent>
@@ -217,5 +224,5 @@ export default function MyVaults() {
         <BottomNav currentPage="my-vaults" />
       </div>
     </div>
-  )
+  );
 }

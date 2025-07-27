@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import { getNeynarClient } from '~/lib/neynar';
+import { NextResponse } from "next/server";
+import { getNeynarClient } from "~/lib/neynar";
 
-const requiredParams = ['message', 'signature'];
+const requiredParams = ["message", "signature"];
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -29,10 +29,7 @@ export async function GET(request: Request) {
       signers,
     });
   } catch (error) {
-    console.error('Error fetching signers:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch signers' },
-      { status: 500 }
-    );
+    console.error("Error fetching signers:", error);
+    return NextResponse.json({ error: "Failed to fetch signers" }, { status: 500 });
   }
 }

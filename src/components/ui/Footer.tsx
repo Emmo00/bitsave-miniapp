@@ -13,7 +13,9 @@ export const Footer: React.FC<FooterProps> = ({ activeTab, setActiveTab, showWal
       <button
         onClick={() => setActiveTab(Tab.Home)}
         className={`flex flex-col items-center justify-center w-full h-full ${
-          activeTab === Tab.Home ? 'text-primary dark:text-primary-light' : 'text-gray-500 dark:text-gray-400'
+          activeTab === Tab.Home
+            ? "text-primary dark:text-primary-light"
+            : "text-gray-500 dark:text-gray-400"
         }`}
       >
         <span className="text-xl">🏠</span>
@@ -22,7 +24,9 @@ export const Footer: React.FC<FooterProps> = ({ activeTab, setActiveTab, showWal
       <button
         onClick={() => setActiveTab(Tab.Actions)}
         className={`flex flex-col items-center justify-center w-full h-full ${
-          activeTab === Tab.Actions ? 'text-primary dark:text-primary-light' : 'text-gray-500 dark:text-gray-400'
+          activeTab === Tab.Actions
+            ? "text-primary dark:text-primary-light"
+            : "text-gray-500 dark:text-gray-400"
         }`}
       >
         <span className="text-xl">⚡</span>
@@ -31,7 +35,9 @@ export const Footer: React.FC<FooterProps> = ({ activeTab, setActiveTab, showWal
       <button
         onClick={() => setActiveTab(Tab.Context)}
         className={`flex flex-col items-center justify-center w-full h-full ${
-          activeTab === Tab.Context ? 'text-primary dark:text-primary-light' : 'text-gray-500 dark:text-gray-400'
+          activeTab === Tab.Context
+            ? "text-primary dark:text-primary-light"
+            : "text-gray-500 dark:text-gray-400"
         }`}
       >
         <span className="text-xl">📋</span>
@@ -41,7 +47,9 @@ export const Footer: React.FC<FooterProps> = ({ activeTab, setActiveTab, showWal
         <button
           onClick={() => setActiveTab(Tab.Wallet)}
           className={`flex flex-col items-center justify-center w-full h-full ${
-            activeTab === Tab.Wallet ? 'text-primary dark:text-primary-light' : 'text-gray-500 dark:text-gray-400'
+            activeTab === Tab.Wallet
+              ? "text-primary dark:text-primary-light"
+              : "text-gray-500 dark:text-gray-400"
           }`}
         >
           <span className="text-xl">👛</span>

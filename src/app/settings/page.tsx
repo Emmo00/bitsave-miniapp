@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "~/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
-import { Switch } from "~/components/ui/switch"
-import { Badge } from "~/components/ui/badge"
-import { Separator } from "~/components/ui/separator"
-import { ArrowLeft, Bell, Wallet, Coins, LogOut, User } from "lucide-react"
-import { BottomNav } from "~/components/bottom-nav"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Switch } from "~/components/ui/switch";
+import { Badge } from "~/components/ui/badge";
+import { Separator } from "~/components/ui/separator";
+import { ArrowLeft, Bell, Wallet, Coins, LogOut, User } from "lucide-react";
+import { BottomNav } from "~/components/bottom-nav";
 
 export default function Settings() {
-  const router = useRouter()
-  const [notifications, setNotifications] = useState(true)
-  const [autoSave, setAutoSave] = useState(false)
+  const router = useRouter();
+  const [notifications, setNotifications] = useState(true);
+  const [autoSave, setAutoSave] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-green-50 to-yellow-50">
@@ -66,7 +66,9 @@ export default function Settings() {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <p className="font-medium text-gray-900">Enable Notifications</p>
-                  <p className="text-sm text-gray-600">Get notified about earnings and savings opportunities</p>
+                  <p className="text-sm text-gray-600">
+                    Get notified about earnings and savings opportunities
+                  </p>
                 </div>
                 <Switch checked={notifications} onCheckedChange={setNotifications} />
               </div>
@@ -79,7 +81,9 @@ export default function Settings() {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <p className="font-medium text-gray-900">Auto-Save</p>
-                  <p className="text-sm text-gray-600">Automatically save a percentage of earnings</p>
+                  <p className="text-sm text-gray-600">
+                    Automatically save a percentage of earnings
+                  </p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch checked={autoSave} onCheckedChange={setAutoSave} disabled />
@@ -189,5 +193,5 @@ export default function Settings() {
         <BottomNav currentPage="settings" />
       </div>
     </div>
-  )
+  );
 }

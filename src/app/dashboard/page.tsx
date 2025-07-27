@@ -1,21 +1,35 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { Button } from "~/components/ui/button"
-import { Card, CardContent } from "~/components/ui/card"
-import { Badge } from "~/components/ui/badge"
-import { Progress } from "~/components/ui/progress"
-import { PiggyBank, Coins, Plus, Bell, ArrowRight } from "lucide-react"
-import { BottomNav } from "~/components/bottom-nav"
-import { NotificationBell } from "~/components/notification-bell"
+import { useRouter } from "next/navigation";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import { Progress } from "~/components/ui/progress";
+import { PiggyBank, Coins, Plus, Bell, ArrowRight } from "lucide-react";
+import { BottomNav } from "~/components/bottom-nav";
+import { NotificationBell } from "~/components/notification-bell";
 
 export default function Dashboard() {
-  const router = useRouter()
+  const router = useRouter();
 
   const mockVaults = [
-    { id: 1, name: "Creator Fund", saved: 245, target: 1000, progress: 24.5, rewards: 12.3 },
-    { id: 2, name: "Equipment Upgrade", saved: 89, target: 500, progress: 17.8, rewards: 4.5 },
-  ]
+    {
+      id: 1,
+      name: "Creator Fund",
+      saved: 245,
+      target: 1000,
+      progress: 24.5,
+      rewards: 12.3,
+    },
+    {
+      id: 2,
+      name: "Equipment Upgrade",
+      saved: 89,
+      target: 500,
+      progress: 17.8,
+      rewards: 4.5,
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-green-50 to-yellow-50">
@@ -67,7 +81,12 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-gray-900">Active Vaults</h3>
-              <Button variant="ghost" size="sm" onClick={() => router.push("/my-vaults")} className="text-purple-600">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push("/my-vaults")}
+                className="text-purple-600"
+              >
                 View All <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
@@ -130,5 +149,5 @@ export default function Dashboard() {
         <BottomNav currentPage="dashboard" />
       </div>
     </div>
-  )
+  );
 }

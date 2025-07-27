@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "~/components/ui/button"
-import { Card, CardContent } from "~/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"
-import { ArrowLeft, Trophy, Share } from "lucide-react"
-import { BottomNav } from "~/components/bottom-nav"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { ArrowLeft, Trophy, Share } from "lucide-react";
+import { BottomNav } from "~/components/bottom-nav";
 
 export default function Leaderboard() {
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState("all")
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState("all");
 
   const mockLeaders = [
     {
@@ -55,10 +55,10 @@ export default function Leaderboard() {
       badges: ["🌱"],
       isCurrentUser: true,
     },
-  ]
+  ];
 
-  const topThree = mockLeaders.slice(0, 3)
-  const currentUser = mockLeaders.find((u) => u.isCurrentUser)
+  const topThree = mockLeaders.slice(0, 3);
+  const currentUser = mockLeaders.find((u) => u.isCurrentUser);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-green-50 to-yellow-50">
@@ -103,7 +103,9 @@ export default function Leaderboard() {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-xs font-medium truncate max-w-16">{topThree[1]?.username}</p>
+                        <p className="text-xs font-medium truncate max-w-16">
+                          {topThree[1]?.username}
+                        </p>
                         <p className="text-xs text-gray-600">${topThree[1]?.totalSaved}</p>
                       </div>
                     </div>
@@ -121,7 +123,9 @@ export default function Leaderboard() {
                         <Trophy className="w-6 h-6 text-yellow-500 absolute -top-3 left-1/2 transform -translate-x-1/2" />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm font-bold truncate max-w-20">{topThree[0]?.username}</p>
+                        <p className="text-sm font-bold truncate max-w-20">
+                          {topThree[0]?.username}
+                        </p>
                         <p className="text-sm text-gray-600">${topThree[0]?.totalSaved}</p>
                         <div className="flex justify-center space-x-1">
                           {topThree[0]?.badges.map((badge, i) => (
@@ -145,7 +149,9 @@ export default function Leaderboard() {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-xs font-medium truncate max-w-16">{topThree[2]?.username}</p>
+                        <p className="text-xs font-medium truncate max-w-16">
+                          {topThree[2]?.username}
+                        </p>
                         <p className="text-xs text-gray-600">${topThree[2]?.totalSaved}</p>
                       </div>
                     </div>
@@ -227,7 +233,9 @@ export default function Leaderboard() {
                             <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium text-gray-900">{user.isCurrentUser ? "You" : user.username}</p>
+                            <p className="font-medium text-gray-900">
+                              {user.isCurrentUser ? "You" : user.username}
+                            </p>
                             <div className="flex space-x-1">
                               {user.badges.map((badge, i) => (
                                 <span key={i} className="text-sm">
@@ -256,7 +264,9 @@ export default function Leaderboard() {
                   <div className="space-y-1">
                     <h4 className="font-medium text-green-800">Share Your Progress</h4>
                     <p className="text-sm text-green-700">
-                      "I'm #{currentUser?.rank} on the Bitsave leaderboard! 🏆 #Bitsave"
+                      {"I'm #" +
+                        (currentUser?.rank || 0) +
+                        " on the Bitsave leaderboard! 🏆 #Bitsave"}
                     </p>
                   </div>
                   <Button size="sm" className="bg-green-500 hover:bg-green-600">
@@ -270,5 +280,5 @@ export default function Leaderboard() {
         <BottomNav currentPage="leaderboard" />
       </div>
     </div>
-  )
+  );
 }

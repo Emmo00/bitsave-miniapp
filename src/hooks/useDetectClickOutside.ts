@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 export function useDetectClickOutside<T extends HTMLElement>(
   ref: React.RefObject<T | null>,
@@ -10,9 +10,9 @@ export function useDetectClickOutside<T extends HTMLElement>(
         callback();
       }
     }
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [ref, callback]);
 }

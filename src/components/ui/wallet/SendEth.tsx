@@ -9,17 +9,17 @@ import { renderError } from "../../../lib/errorUtils";
 
 /**
  * SendEth component handles sending ETH transactions to protocol guild addresses.
- * 
+ *
  * This component provides a simple interface for users to send small amounts
  * of ETH to protocol guild addresses. It automatically selects the appropriate
  * recipient address based on the current chain and displays transaction status.
- * 
+ *
  * Features:
  * - Chain-specific recipient addresses
  * - Transaction status tracking
  * - Error handling and display
  * - Transaction hash display
- * 
+ *
  * @example
  * ```tsx
  * <SendEth />
@@ -44,11 +44,11 @@ export function SendEth() {
   // --- Computed Values ---
   /**
    * Determines the recipient address based on the current chain.
-   * 
+   *
    * Uses different protocol guild addresses for different chains:
    * - Base: 0x32e3C7fD24e175701A35c224f2238d18439C7dBC
    * - Other chains: 0xB3d8d7887693a9852734b4D25e9C0Bb35Ba8a830
-   * 
+   *
    * @returns string - The recipient address for the current chain
    */
   const protocolGuildRecipientAddress = useMemo(() => {
@@ -61,7 +61,7 @@ export function SendEth() {
   // --- Handlers ---
   /**
    * Handles sending the ETH transaction.
-   * 
+   *
    * This function sends a small amount of ETH (1 wei) to the protocol guild
    * address for the current chain. The transaction is sent using the wagmi
    * sendTransaction hook.
@@ -92,11 +92,11 @@ export function SendEth() {
             {isEthTransactionConfirming
               ? "Confirming..."
               : isEthTransactionConfirmed
-              ? "Confirmed!"
-              : "Pending"}
+                ? "Confirmed!"
+                : "Pending"}
           </div>
         </div>
       )}
     </>
   );
-} 
+}

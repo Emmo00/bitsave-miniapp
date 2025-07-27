@@ -1,37 +1,42 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "~/components/ui/button"
-import { Badge } from "~/components/ui/badge"
-import { Bell } from "lucide-react"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "~/components/ui/button";
+import { Badge } from "~/components/ui/badge";
+import { Bell } from "lucide-react";
 
 export function NotificationBell() {
-  const router = useRouter()
-  const [unreadCount, setUnreadCount] = useState(0)
+  const router = useRouter();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     // Simulate checking for unread notifications
     const checkNotifications = () => {
-      const notifications = getNotifications()
-      const unread = notifications.filter((n) => !n.read).length
-      setUnreadCount(unread)
-    }
+      const notifications = getNotifications();
+      const unread = notifications.filter((n) => !n.read).length;
+      setUnreadCount(unread);
+    };
 
-    checkNotifications()
+    checkNotifications();
 
     // Check for new notifications every 30 seconds
-    const interval = setInterval(checkNotifications, 30000)
-    return () => clearInterval(interval)
-  }, [])
+    const interval = setInterval(checkNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleClick = () => {
-    router.push("/notifications-panel")
-  }
+    router.push("/notifications-panel");
+  };
 
   return (
     <div className="relative">
-      <Button variant="ghost" size="icon" onClick={handleClick} className="relative hover:bg-purple-50">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleClick}
+        className="relative hover:bg-purple-50"
+      >
         <Bell className="w-5 h-5 text-gray-600" />
         {unreadCount > 0 && (
           <Badge
@@ -43,7 +48,7 @@ export function NotificationBell() {
         )}
       </Button>
     </div>
-  )
+  );
 }
 
 // Mock notification data - in real app, this would come from your backend
@@ -86,5 +91,5 @@ function getNotifications() {
       read: true,
       actionable: false,
     },
-  ]
+  ];
 }

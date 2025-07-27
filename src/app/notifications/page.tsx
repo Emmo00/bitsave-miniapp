@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { Button } from "~/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
-import { Badge } from "~/components/ui/badge"
-import { Progress } from "~/components/ui/progress"
-import { ArrowLeft, TrendingUp, Coins, PiggyBank, Plus } from "lucide-react"
+import { useRouter } from "next/navigation";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import { Progress } from "~/components/ui/progress";
+import { ArrowLeft, TrendingUp, Coins, PiggyBank, Plus } from "lucide-react";
 
 export default function WalletMonitor() {
-  const router = useRouter()
-  const suggestedAmount = 14
-  const weeklyEarnings = 47
+  const router = useRouter();
+  const suggestedAmount = 14;
+  const weeklyEarnings = 47;
 
   const mockVaults = [
     { id: 1, name: "Creator Fund", saved: 245, target: 1000 },
     { id: 2, name: "Equipment Upgrade", saved: 89, target: 500 },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-green-50 to-yellow-50">
@@ -44,7 +44,8 @@ export default function WalletMonitor() {
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold text-gray-900">Great week! 🎉</h2>
                 <p className="text-gray-700">
-                  You earned <span className="font-bold text-green-600">${weeklyEarnings}</span> from Farcaster
+                  You earned <span className="font-bold text-green-600">${weeklyEarnings}</span>{" "}
+                  from Farcaster
                 </p>
                 <p className="text-sm text-gray-600">Time to pay yourself and grow your savings!</p>
               </div>
@@ -81,14 +82,19 @@ export default function WalletMonitor() {
             <h3 className="font-semibold text-gray-900">Choose a vault to top up:</h3>
 
             {mockVaults.map((vault) => (
-              <Card key={vault.id} className="border-gray-200 hover:border-purple-300 cursor-pointer transition-colors">
+              <Card
+                key={vault.id}
+                className="border-gray-200 hover:border-purple-300 cursor-pointer transition-colors"
+              >
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium text-gray-900">{vault.name}</h4>
                     <Button
                       size="sm"
                       className="bg-green-500 hover:bg-green-600"
-                      onClick={() => router.push(`/top-up?vault=${vault.id}&amount=${suggestedAmount}`)}
+                      onClick={() =>
+                        router.push(`/top-up?vault=${vault.id}&amount=${suggestedAmount}`)
+                      }
                     >
                       Top Up ${suggestedAmount}
                     </Button>
@@ -117,7 +123,9 @@ export default function WalletMonitor() {
                 <Plus className="w-8 h-8 text-purple-500 mx-auto" />
                 <div className="space-y-1">
                   <h4 className="font-medium text-gray-900">Create New Vault</h4>
-                  <p className="text-sm text-gray-600">Start a new savings goal with ${suggestedAmount}</p>
+                  <p className="text-sm text-gray-600">
+                    Start a new savings goal with ${suggestedAmount}
+                  </p>
                 </div>
                 <Button
                   variant="outline"
@@ -135,7 +143,9 @@ export default function WalletMonitor() {
             <Button variant="outline" onClick={() => router.push("/dashboard")} className="h-12">
               Maybe Later
             </Button>
-            <Button className="h-12 bg-green-500 hover:bg-green-600">Save ${suggestedAmount} 🎯</Button>
+            <Button className="h-12 bg-green-500 hover:bg-green-600">
+              Save ${suggestedAmount} 🎯
+            </Button>
           </div>
 
           {/* Motivation */}
@@ -143,12 +153,13 @@ export default function WalletMonitor() {
             <CardContent className="p-4 text-center space-y-2">
               <Coins className="w-6 h-6 text-yellow-500 mx-auto" />
               <p className="text-sm text-purple-700">
-                <span className="font-medium">Pro tip:</span> Regular savers earn 2x more $BTS rewards!
+                <span className="font-medium">Pro tip:</span> Regular savers earn 2x more $BTS
+                rewards!
               </p>
             </CardContent>
           </Card>
         </div>
       </div>
     </div>
-  )
+  );
 }

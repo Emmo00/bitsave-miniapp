@@ -1,6 +1,6 @@
-import { MiniAppNotificationDetails } from '@farcaster/miniapp-sdk';
-import { Redis } from '@upstash/redis';
-import { APP_NAME } from './constants';
+import { MiniAppNotificationDetails } from "@farcaster/miniapp-sdk";
+import { Redis } from "@upstash/redis";
+import { APP_NAME } from "./constants";
 
 // In-memory fallback storage
 const localStore = new Map<string, MiniAppNotificationDetails>();
@@ -40,9 +40,7 @@ export async function setUserNotificationDetails(
   }
 }
 
-export async function deleteUserNotificationDetails(
-  fid: number
-): Promise<void> {
+export async function deleteUserNotificationDetails(fid: number): Promise<void> {
   const key = getUserNotificationDetailsKey(fid);
   if (redis) {
     await redis.del(key);

@@ -19,10 +19,7 @@ export async function POST(request: NextRequest) {
   const requestBody = requestSchema.safeParse(requestJson);
 
   if (requestBody.success === false) {
-    return Response.json(
-      { success: false, errors: requestBody.error.errors },
-      { status: 400 }
-    );
+    return Response.json({ success: false, errors: requestBody.error.errors }, { status: 400 });
   }
 
   // Only store notification details if not using Neynar
@@ -42,15 +39,9 @@ export async function POST(request: NextRequest) {
   });
 
   if (sendResult.state === "error") {
-    return Response.json(
-      { success: false, error: sendResult.error },
-      { status: 500 }
-    );
+    return Response.json({ success: false, error: sendResult.error }, { status: 500 });
   } else if (sendResult.state === "rate_limit") {
-    return Response.json(
-      { success: false, error: "Rate limited" },
-      { status: 429 }
-    );
+    return Response.json({ success: false, error: "Rate limited" }, { status: 429 });
   }
 
   return Response.json({ success: true });
