@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
-import { Progress } from "~/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, PiggyBank, Coins, TrendingUp, Plus } from "lucide-react";
-import { BottomNav } from "~/components/bottom-nav";
+import { BottomNav } from "@/components/bottom-nav";
 
 export default function MyVaults() {
   const router = useRouter();

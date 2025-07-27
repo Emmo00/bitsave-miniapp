@@ -1,13 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
-import { Progress } from "~/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { PiggyBank, Coins, Plus, Bell, ArrowRight } from "lucide-react";
-import { BottomNav } from "~/components/bottom-nav";
-import { NotificationBell } from "~/components/notification-bell";
+import { BottomNav } from "@/components/bottom-nav";
+import { NotificationBell } from "@/components/notification-bell";
 
 export default function Dashboard() {
   const router = useRouter();

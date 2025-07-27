@@ -816,7 +816,7 @@ async function deployToVercel(useGitHub = false): Promise<void> {
     console.log(
       `\n⚠️  To complete your mini app manifest, you must sign it using the Farcaster developer portal.`
     );
-    console.log("1. Go to: https://farcaster.xyz/~/developers/mini-apps/manifest?domain=" + domain);
+    console.log("1. Go to: https://farcaster.xyz/@/developers/mini-apps/manifest?domain=" + domain);
     console.log('2. Click "Transfer Ownership" and follow the instructions to sign the manifest.');
     console.log("3. Copy the resulting accountAssociation JSON from the browser.");
     console.log("4. Paste it below when prompted.");

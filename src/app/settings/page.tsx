@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Switch } from "~/components/ui/switch";
-import { Badge } from "~/components/ui/badge";
-import { Separator } from "~/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Bell, Wallet, Coins, LogOut, User } from "lucide-react";
-import { BottomNav } from "~/components/bottom-nav";
+import { BottomNav } from "@/components/bottom-nav";
 
 export default function Settings() {
   const router = useRouter();
