@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent } from "../../components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { ArrowLeft, Trophy, Share } from "lucide-react";
-import { BottomNav } from "@/components/bottom-nav";
+import { BottomNav } from "../../components/bottom-nav";
 
 export default function Leaderboard() {
   const router = useRouter();

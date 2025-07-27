@@ -2,9 +2,9 @@
 
 import dynamic from "next/dynamic";
 import { MiniAppProvider } from "@neynar/react";
-import { ANALYTICS_ENABLED } from "@/lib/constants";
+import { ANALYTICS_ENABLED } from "../lib/constants";
 
-const WagmiProvider = dynamic(() => import("@/components/providers/WagmiProvider"), {
+const WagmiProvider = dynamic(() => import("../components/providers/WagmiProvider"), {
   ssr: false,
 });
 

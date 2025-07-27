@@ -5,9 +5,9 @@ import type { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { AuthKitProvider } from "@farcaster/auth-kit";
 import { MiniAppProvider } from "@neynar/react";
-import { ANALYTICS_ENABLED } from "@/lib/constants";
+import { ANALYTICS_ENABLED } from "../lib/constants";
 
-const WagmiProvider = dynamic(() => import("@/components/providers/WagmiProvider"), {
+const WagmiProvider = dynamic(() => import("../components/providers/WagmiProvider"), {
   ssr: false,
 });
 
