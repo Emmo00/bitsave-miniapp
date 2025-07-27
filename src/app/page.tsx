@@ -1,28 +1,26 @@
-"use client";
-
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Metadata } from "next";
+import { APP_NAME, APP_DESCRIPTION, APP_OG_IMAGE_URL } from "~/lib/constants";
+import { getMiniAppEmbedMetadata } from "~/lib/utils";
+import LandingPage from "./landing/page";
+
+export const revalidate = 300;
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: APP_NAME,
+    openGraph: {
+      title: APP_NAME,
+      description: APP_DESCRIPTION,
+      images: [APP_OG_IMAGE_URL],
+    },
+    other: {
+      "fc:frame": JSON.stringify(getMiniAppEmbedMetadata()),
+    },
+  };
+}
 
 export default function HomePage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    // Check if user is logged in (you can implement proper auth logic here)
-    const isLoggedIn = localStorage.getItem("bitsave-logged-in");
-
-    if (isLoggedIn) {
-      router.push("/dashboard");
-    } else {
-      router.push("/landing");
-    }
-  }, [router]);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-green-50 to-yellow-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading Bitsave...</p>
-      </div>
-    </div>
-  );
+  return <LandingPage />;
 }
