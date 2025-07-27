@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Button } from "../Button";
+import { Button } from "../button";
 import { renderError } from "../../../lib/errorUtils";
 
 interface SignSolanaMessageProps {

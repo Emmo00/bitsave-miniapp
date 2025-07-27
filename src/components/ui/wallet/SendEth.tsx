@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
 import { base } from "wagmi/chains";
-import { Button } from "../Button";
+import { Button } from "../button";
 import { truncateAddress } from "../../../lib/truncateAddress";
 import { renderError } from "../../../lib/errorUtils";
 
