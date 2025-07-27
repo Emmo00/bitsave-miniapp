@@ -7,7 +7,7 @@ import inquirer from "inquirer";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import { Vercel } from "@vercel/sdk";
-import { APP_NAME, APP_BUTTON_TEXT } from "../src/lib/constants.js";
+import { APP_NAME, APP_BUTTON_TEXT } from "../lib/constants.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, "..");
