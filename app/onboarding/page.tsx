@@ -15,13 +15,34 @@ import {
   ExternalLink,
   Wallet,
   Sparkles,
+  Info,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
+import { Slider } from "../../components/ui/slider";
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showVaultModal, setShowVaultModal] = useState(false);
+  const [vaultConfig, setVaultConfig] = useState({
+    name: "Creator Vault",
+    network: "base",
+    token: "usdc",
+    amount: "0",
+    penalty: "0",
+    duration: [0], // 0 means unlock anytime
+  });
 
   const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
@@ -58,6 +79,12 @@ export default function OnboardingPage() {
   const isStepAccessible = (stepId: number) => stepId <= currentStep;
 
   const handleStepAction = async (stepId: number) => {
+    if (stepId === 3) {
+      // Open vault configuration modal instead of directly processing
+      setShowVaultModal(true);
+      return;
+    }
+
     setIsProcessing(true);
 
     // Simulate processing time
@@ -69,12 +96,25 @@ export default function OnboardingPage() {
     // Move to next step or finish
     if (stepId < totalSteps) {
       setCurrentStep(stepId + 1);
-    } else {
-      // All steps completed, redirect to dashboard
-      localStorage.setItem("bitsave-logged-in", "true");
-      localStorage.setItem("bitsave-onboarded", "true");
-      router.push("/dashboard");
     }
+
+    setIsProcessing(false);
+  };
+
+  const handleCreateVault = async () => {
+    setShowVaultModal(false);
+    setIsProcessing(true);
+
+    // Simulate vault creation
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // Mark step as completed
+    setCompletedSteps((prev) => [...prev, 3]);
+
+    // Redirect to dashboard
+    localStorage.setItem("bitsave-logged-in", "true");
+    localStorage.setItem("bitsave-onboarded", "true");
+    router.push("/dashboard");
 
     setIsProcessing(false);
   };
@@ -90,8 +130,7 @@ export default function OnboardingPage() {
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Add Bitsave to Farcaster</h3>
               <p className="text-sm text-gray-600 max-w-sm mx-auto">
-                Add the Bitsave MiniApp in your Farcaster client for easy access to your
-                savings.
+                Add the Bitsave MiniApp in your Farcaster client for easy access to your savings.
               </p>
             </div>
 
@@ -340,6 +379,256 @@ export default function OnboardingPage() {
           </Card>
         </div>
       </div>
+      {/* Vault Configuration Modal */}
+      <Dialog open={showVaultModal} onOpenChange={setShowVaultModal}>
+        <DialogContent className="max-w-sm mx-auto max-h-[90vh] overflow-hidden flex flex-col text-black">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center space-x-2">
+              <PiggyBank className="w-5 h-5 text-green-500" />
+              <span>Configure Your Creator Vault</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto px-1">
+            <div className="space-y-4">
+              {/* Recommended Defaults Notice */}
+              <Card className="border-green-200 bg-green-50/50">
+                <CardContent className="p-3 space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Sparkles className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-800">Recommended Settings</span>
+                  </div>
+                  <p className="text-xs text-green-700">
+                    These defaults are optimized for new creators. You can customize them, but the
+                    defaults work great!
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Vault Name */}
+              <div className="space-y-2">
+                <Label htmlFor="vault-name" className="flex items-center space-x-2">
+                  <span>Vault Name</span>
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                    Recommended
+                  </Badge>
+                </Label>
+                <Input
+                  id="vault-name"
+                  value={vaultConfig.name}
+                  onChange={(e) => setVaultConfig({ ...vaultConfig, name: e.target.value })}
+                  className="rounded-xl"
+                  placeholder="Creator Vault"
+                />
+                <p className="text-xs text-gray-500">
+                  Perfect for creators starting their savings journey
+                </p>
+              </div>
+
+              {/* Network */}
+              <div className="space-y-2">
+                <Label className="flex items-center space-x-2">
+                  <span>Network</span>
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                    Recommended
+                  </Badge>
+                </Label>
+                <Select
+                  value={vaultConfig.network}
+                  onValueChange={(value) => setVaultConfig({ ...vaultConfig, network: value })}
+                >
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="base">
+                      <div className="flex items-center space-x-2">
+                        <span>Base</span>
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                          Low Fees
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="celo">Celo</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Base offers the lowest transaction fees for creators
+                </p>
+              </div>
+
+              {/* Token */}
+              <div className="space-y-2">
+                <Label className="flex items-center space-x-2">
+                  <span>Token to Save</span>
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                    Recommended
+                  </Badge>
+                </Label>
+                <Select
+                  value={vaultConfig.token}
+                  onValueChange={(value) => setVaultConfig({ ...vaultConfig, token: value })}
+                >
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="usdc">
+                      <div className="flex items-center space-x-2">
+                        <span>USDC</span>
+                        <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                          Stable
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="eth">ETH</SelectItem>
+                    <SelectItem value="degen">DEGEN</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  USDC maintains stable value - perfect for savings goals
+                </p>
+              </div>
+
+              {/* Initial Amount */}
+              <div className="space-y-2">
+                <Label htmlFor="initial-amount" className="flex items-center space-x-2">
+                  <span>Initial Amount (Optional)</span>
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                    Start Small
+                  </Badge>
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                    $
+                  </span>
+                  <Input
+                    id="initial-amount"
+                    type="number"
+                    value={vaultConfig.amount}
+                    onChange={(e) => setVaultConfig({ ...vaultConfig, amount: e.target.value })}
+                    className="pl-8 rounded-xl"
+                    placeholder="0.00"
+                  />
+                </div>
+                <p className="text-xs text-gray-500">
+                  Start with $0 and add funds as you earn - no pressure!
+                </p>
+              </div>
+
+              {/* Duration */}
+              <div className="space-y-2">
+                <Label className="flex items-center space-x-2">
+                  <span>
+                    Duration:{" "}
+                    {vaultConfig.duration[0] === 0
+                      ? "Unlock Anytime"
+                      : `${vaultConfig.duration[0]} months`}
+                  </span>
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                    Flexible
+                  </Badge>
+                </Label>
+                <Slider
+                  value={vaultConfig.duration}
+                  onValueChange={(value) => setVaultConfig({ ...vaultConfig, duration: value })}
+                  max={24}
+                  min={0}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Unlock Anytime</span>
+                  <span>24 months</span>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Flexible access means you can withdraw whenever needed
+                </p>
+              </div>
+
+              {/* Penalty */}
+              <div className="space-y-2">
+                <Label htmlFor="penalty" className="flex items-center space-x-2">
+                  <span>Early Withdrawal Penalty</span>
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                    No Penalty
+                  </Badge>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="penalty"
+                    type="number"
+                    value={vaultConfig.penalty}
+                    onChange={(e) => setVaultConfig({ ...vaultConfig, penalty: e.target.value })}
+                    className="pr-8 rounded-xl"
+                    placeholder="0"
+                  />
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                    %
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500">
+                  No penalty means complete flexibility - perfect for beginners
+                </p>
+              </div>
+
+              {/* Info Card */}
+              <Card className="border-blue-200 bg-blue-50/50">
+                <CardContent className="p-3 space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Info className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-800">Why These Defaults?</span>
+                  </div>
+                  <ul className="space-y-1 text-xs text-blue-700">
+                    <li>
+                      • <strong>Base + USDC:</strong> Lowest fees, stable value
+                    </li>
+                    <li>
+                      • <strong>No penalty:</strong> Learn without pressure
+                    </li>
+                    <li>
+                      • <strong>Flexible duration:</strong> Access funds when needed
+                    </li>
+                    <li>
+                      • <strong>$0 start:</strong> Begin earning, then save
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Action Buttons - Fixed at bottom */}
+          <div className="flex-shrink-0 pt-4 space-y-3">
+            <Button
+              onClick={handleCreateVault}
+              className="w-full bg-green-500 hover:bg-green-600 h-12"
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Creating Vault...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <PiggyBank className="w-4 h-4" />
+                  <span>Create Vault for $1.00</span>
+                </div>
+              )}
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowVaultModal(false)}
+              className="w-full bg-transparent"
+              disabled={isProcessing}
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
