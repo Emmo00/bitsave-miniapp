@@ -5,6 +5,8 @@ import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { PiggyBank, Trophy, Bell, ArrowRight, Sparkles, TrendingUp } from "lucide-react";
+import { useEffect } from "react";
+import sdk from "@farcaster/miniapp-sdk";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -13,6 +15,10 @@ export default function LandingPage() {
     localStorage.setItem("bitsave-logged-in", "true");
     router.push("/dashboard");
   };
+
+  useEffect(() => {
+    sdk.actions.ready();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-green-50 to-yellow-50">
@@ -102,18 +108,6 @@ export default function LandingPage() {
                   <p className="text-sm text-gray-700">Earn $BTS rewards as your vault grows</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Install Prompt */}
-          <Card className="border-2 border-dashed border-purple-300 bg-purple-50/30">
-            <CardContent className="p-4 text-center space-y-3">
-              <Sparkles className="w-8 h-8 text-purple-500 mx-auto" />
-              <h3 className="font-semibold text-gray-900">Install Bitsave MiniApp</h3>
-              <p className="text-sm text-gray-600">Add to your Farcaster for quick access</p>
-              <Badge variant="secondary" className="bg-purple-100 text-purple-700">
-                Coming Soon
-              </Badge>
             </CardContent>
           </Card>
         </div>
