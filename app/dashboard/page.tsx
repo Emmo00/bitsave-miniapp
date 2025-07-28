@@ -5,7 +5,7 @@ import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { Progress } from "../../components/ui/progress";
-import { PiggyBank, Coins, Plus, Bell, ArrowRight } from "lucide-react";
+import { PiggyBank, Coins, Plus, Bell, ArrowRight, Waves, Handshake } from "lucide-react";
 import { BottomNav } from "../../components/bottom-nav";
 import { NotificationBell } from "../../components/notification-bell";
 
@@ -36,9 +36,10 @@ export default function Dashboard() {
       <div className="max-w-md mx-auto bg-white min-h-screen shadow-xl">
         <div className="p-6 space-y-6 pb-24">
           {/* Header */}
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center gap-2 justify-between pt-4">
+            <div></div>
             <div className="text-center flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">Welcome back! 👋</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Welcome back! <Handshake className="inline-block w-6 h-6 text-purple-800" /></h1>
               <p className="text-gray-600 text-sm">Let's grow your vault</p>
             </div>
             <NotificationBell />

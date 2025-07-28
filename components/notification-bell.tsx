@@ -30,7 +30,7 @@ export function NotificationBell() {
   };
 
   return (
-    <div className="relative">
+    <div className="absolute right-4 top-4">
       <Button
         variant="ghost"
         size="icon"
