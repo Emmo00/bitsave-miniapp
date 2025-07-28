@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
-import { Badge } from "../../components/ui/badge";
 import { PiggyBank, Trophy, Bell, ArrowRight, Sparkles, TrendingUp } from "lucide-react";
 import { useEffect } from "react";
 import sdk from "@farcaster/miniapp-sdk";
@@ -12,12 +11,11 @@ export default function LandingPage() {
   const router = useRouter();
 
   const handleGetStarted = () => {
-    localStorage.setItem("bitsave-logged-in", "true");
-    router.push("/dashboard");
+    router.push("/onboarding");
   };
 
   useEffect(() => {
-    sdk.actions.ready();
+    sdk.actions.ready(); // Notify the SDK that the miniapp is ready
   }, []);
 
   return (
