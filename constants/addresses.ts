@@ -1,4 +1,4 @@
-type Stablecoin = {
+export type Stablecoin = {
   name: string;
   image: string;
   address: string | undefined;
@@ -19,7 +19,7 @@ let CONTRACT_ADDRESSES: ContractAddresses = {
     BITSAVE: process.env.NEXT_PUBLIC_BASE_BITSAVE_CONTRACT_ADDRESS,
     STABLECOINS: [
       {
-        name: "USDC",
+        name: "USDCC",
         image: "usdc.png",
         address: process.env.NEXT_PUBLIC_BASE_USDC_CONTRACT_ADDRESS,
         decimals: 6,

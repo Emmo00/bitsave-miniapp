@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { BaseError, useAccount, useConnect } from "wagmi";
 import { switchChain } from "../../onchain/actions";
 import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
 import { Progress } from "../../components/ui/progress";
 import { Badge } from "../../components/ui/badge";
 import {
@@ -19,7 +24,12 @@ import {
   Info,
   Link,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import {
@@ -37,9 +47,10 @@ import {
   getUserChildContractFromAnyChain,
   getUserVaultNames,
 } from "../../onchain/reads";
-import { joinBitSave } from "../../onchain/writes";
+import { createSavingsVault, joinBitSave } from "../../onchain/writes";
 import { useToast } from "../../hooks/useToast";
 import { WriteContractErrorType } from "@wagmi/core";
+import CONTRACT_ADDRESSES, { Stablecoin } from "../../constants/addresses";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -52,20 +63,25 @@ export default function OnboardingPage() {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showVaultModal, setShowVaultModal] = useState(false);
-  const [selectedChain, setSelectedChain] = useState<(typeof config)["chains"][number]["id"]>(
-    config.chains[0].id
-  );
+  const [selectedChain, setSelectedChain] = useState<
+    (typeof config)["chains"][number]["id"]
+  >(config.state.chainId);
   const [vaultConfig, setVaultConfig] = useState<{
     name: string;
     network: number;
-    token: string;
+    token: Stablecoin;
     amount: string;
     penalty: string;
     duration: number[];
   }>({
     name: "Creator Vault",
-    network: config.chains[0].id,
-    token: "usdc",
+    network: selectedChain,
+    token:
+      CONTRACT_ADDRESSES[
+        config.chains
+          .find((chain) => chain.id === selectedChain)
+          ?.name.toUpperCase() ?? "BASE"
+      ].STABLECOINS[0], // Default to first stablecoin
     amount: "0",
     penalty: "0",
     duration: [0], // 0 means unlock anytime
@@ -102,7 +118,9 @@ export default function OnboardingPage() {
       if (!isConnected || !address) return;
 
       try {
-        const result = await getUserChildContractFromAnyChain(address.toLowerCase());
+        const result = await getUserChildContractFromAnyChain(
+          address.toLowerCase()
+        );
         if (!result) {
           console.log("User is not a member of Bitsave");
           setIsAMember(false);
@@ -126,7 +144,9 @@ export default function OnboardingPage() {
       if (!isConnected || !address || !isAMember) return;
 
       try {
-        const result = await getUserChildContractFromAnyChain(address.toLowerCase());
+        const result = await getUserChildContractFromAnyChain(
+          address.toLowerCase()
+        );
         console.log("User child contract result [onboarding]:", result);
         if (!result) {
           console.log("User has no child contract or is not a member");
@@ -238,12 +258,14 @@ export default function OnboardingPage() {
         toast.success("Transaction Successfull", "Successfully joined BitSave");
         setCompletedSteps((prev) => [...prev, 3]);
         setCurrentStep(stepId + 1);
+        setIsAMember(true);
         setIsProcessing(false);
       } catch (error) {
         console.error("Error joining Bitsave:", error);
         toast.error(
           "Transaction Failed",
-          (error as BaseError).shortMessage || "Failed to join BitSave. Please try again."
+          (error as BaseError).shortMessage ||
+            "Failed to join BitSave. Please try again."
         );
         setIsProcessing(false);
       }
@@ -254,18 +276,32 @@ export default function OnboardingPage() {
     setShowVaultModal(false);
     setIsProcessing(true);
 
-    // Simulate vault creation
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // process create saving transaction
+    if (!isConnected) {
+      // make sure is connected
+      connect({ connector: connectors[0] });
+    }
 
-    // Mark step as completed
-    setCompletedSteps((prev) => [...prev, 3]);
-
-    // Redirect to dashboard
-    localStorage.setItem("bitsave-logged-in", "true");
-    localStorage.setItem("bitsave-onboarded", "true");
-    router.push("/dashboard");
-
-    setIsProcessing(false);
+    // make transaction to create savings vault
+    try {
+      const transactionHash = await createSavingsVault(savingFee, vaultConfig);
+      console.log("Transaction successful:", transactionHash);
+      toast.success(
+        "Transaction Successfull",
+        "Successfully created Savings Vault"
+      );
+      setCompletedSteps((prev) => [...prev, 4]);
+      setIsProcessing(false);
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Error creating Savings Vault:", error);
+      toast.error(
+        "Transaction Failed",
+        (error as BaseError).shortMessage ||
+          "Failed to create Savings Vault. Please try again."
+      );
+      setIsProcessing(false);
+    }
   };
 
   const getStepContent = (step: (typeof steps)[0]) => {
@@ -277,9 +313,12 @@ export default function OnboardingPage() {
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
                 <Plus className="w-8 h-8 text-purple-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Add Bitsave to Farcaster</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Add Bitsave to Farcaster
+              </h3>
               <p className="text-sm text-gray-600 max-w-sm mx-auto">
-                Add the Bitsave MiniApp in your Farcaster client for easy access to your savings.
+                Add the Bitsave MiniApp in your Farcaster client for easy access
+                to your savings.
               </p>
             </div>
 
@@ -335,10 +374,12 @@ export default function OnboardingPage() {
               <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto">
                 <Link className="w-8 h-8 text-yellow-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Choose Chain</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Choose Chain
+              </h3>
               <p className="text-sm text-gray-600 max-w-sm mx-auto">
-                Select the chain you want to use for your vault. Base is recommended for lowest
-                fees.
+                Select the chain you want to use for your vault. Base is
+                recommended for lowest fees.
               </p>
             </div>
 
@@ -351,7 +392,9 @@ export default function OnboardingPage() {
                   value={`${selectedChain}`}
                   onValueChange={(value) => {
                     setVaultConfig({ ...vaultConfig, network: Number(value) });
-                    setSelectedChain(Number(value) as (typeof config)["chains"][number]["id"]); // track global chain state
+                    setSelectedChain(
+                      Number(value) as (typeof config)["chains"][number]["id"]
+                    ); // track global chain state
                   }}
                 >
                   <SelectTrigger className="rounded-xl">
@@ -403,16 +446,21 @@ export default function OnboardingPage() {
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
                 <Users className="w-8 h-8 text-blue-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Join Bitsave</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Join Bitsave
+              </h3>
               <p className="text-sm text-gray-600 max-w-sm mx-auto">
-                Become a member of the Bitsave community and unlock exclusive features.
+                Become a member of the Bitsave community and unlock exclusive
+                features.
               </p>
             </div>
 
             <Card className="border-blue-200 bg-blue-50/50">
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-blue-800">Membership Benefits:</h4>
+                  <h4 className="font-medium text-blue-800">
+                    Membership Benefits:
+                  </h4>
                   <Badge className="bg-blue-500 text-white">$1.00</Badge>
                 </div>
                 <ul className="space-y-2 text-sm text-blue-700">
@@ -438,7 +486,9 @@ export default function OnboardingPage() {
 
             <Button
               onClick={() => handleStepAction(3)}
-              disabled={isProcessing || isStepCompleted(3) || !isStepCompleted(2)}
+              disabled={
+                isProcessing || isStepCompleted(3) || !isStepCompleted(2)
+              }
               className="w-full bg-blue-500 hover:bg-blue-600 h-12"
             >
               {isProcessing ? (
@@ -465,13 +515,19 @@ export default function OnboardingPage() {
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle className="w-8 h-8 text-blue-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Already a Member</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Already a Member
+              </h3>
               <p className="text-sm text-gray-600 max-w-sm mx-auto">
-                You are already a member of the Bitsave community. Proceed to create your vault.
+                You are already a member of the Bitsave community. Proceed to
+                create your vault.
               </p>
             </div>
             <Button
-              onClick={() => setCurrentStep(4)}
+              onClick={() => {
+                setCompletedSteps((prev) => [...prev, 3]);
+                setCurrentStep(4);
+              }}
               disabled={isProcessing || isStepCompleted(3)}
               className="w-full bg-blue-500 hover:bg-blue-600 h-12"
             >
@@ -490,7 +546,9 @@ export default function OnboardingPage() {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
                 <PiggyBank className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Create Creator Vault</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Create Creator Vault
+              </h3>
               <p className="text-sm text-gray-600 max-w-sm mx-auto">
                 Set up your first savings vault and start earning $BTS rewards.
               </p>
@@ -499,7 +557,9 @@ export default function OnboardingPage() {
             <Card className="border-green-200 bg-green-50/50">
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-green-800">Creator Vault Features:</h4>
+                  <h4 className="font-medium text-green-800">
+                    Creator Vault Features:
+                  </h4>
                   <Badge className="bg-green-500 text-white">$1.00</Badge>
                 </div>
                 <ul className="space-y-2 text-sm text-green-700">
@@ -520,8 +580,10 @@ export default function OnboardingPage() {
             </Card>
 
             <Button
-              onClick={() => handleStepAction(3)}
-              disabled={isProcessing || isStepCompleted(3) || !isStepCompleted(2)}
+              onClick={() => handleStepAction(4)}
+              disabled={
+                isProcessing || isStepCompleted(4) || !isStepCompleted(3)
+              }
               className="w-full bg-green-500 hover:bg-green-600 h-12"
             >
               {isProcessing ? (
@@ -529,7 +591,7 @@ export default function OnboardingPage() {
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   <span>Creating Vault...</span>
                 </div>
-              ) : isStepCompleted(3) ? (
+              ) : isStepCompleted(4) ? (
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4" />
                   <span>Vault Created</span>
@@ -537,7 +599,7 @@ export default function OnboardingPage() {
               ) : (
                 <div className="flex items-center space-x-2">
                   <PiggyBank className="w-4 h-4" />
-                  <span>Create Vault for $1.00</span>
+                  <span>Create Vault for ${savingFee}.00</span>
                 </div>
               )}
             </Button>
@@ -566,8 +628,12 @@ export default function OnboardingPage() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-gray-900">Get Started with Bitsave</h1>
-              <p className="text-sm text-gray-600">Complete these steps to start saving</p>
+              <h1 className="text-xl font-bold text-gray-900">
+                Get Started with Bitsave
+              </h1>
+              <p className="text-sm text-gray-600">
+                Complete these steps to start saving
+              </p>
             </div>
           </div>
 
@@ -580,7 +646,10 @@ export default function OnboardingPage() {
                   {completedSteps.length} of {totalSteps} completed
                 </span>
               </div>
-              <Progress value={(completedSteps.length / totalSteps) * 100} className="h-3" />
+              <Progress
+                value={(completedSteps.length / totalSteps) * 100}
+                className="h-3"
+              />
             </div>
 
             {/* Step Indicators */}
@@ -596,7 +665,11 @@ export default function OnboardingPage() {
                           : "bg-gray-200 text-gray-500"
                     }`}
                   >
-                    {isStepCompleted(step.id) ? <CheckCircle className="w-4 h-4" /> : step.id}
+                    {isStepCompleted(step.id) ? (
+                      <CheckCircle className="w-4 h-4" />
+                    ) : (
+                      step.id
+                    )}
                   </div>
                   {index < steps.length - 1 && (
                     <div
@@ -611,7 +684,9 @@ export default function OnboardingPage() {
           {/* Current Step Content */}
           <Card className="border-gray-200">
             <CardContent className="p-6">
-              {getStepContent(steps.find((s) => s.id === currentStep) || steps[0])}
+              {getStepContent(
+                steps.find((s) => s.id === currentStep) || steps[0]
+              )}
             </CardContent>
           </Card>
 
@@ -619,9 +694,13 @@ export default function OnboardingPage() {
           {currentStep !== 1 && (
             <Card className="border-orange-200 bg-orange-50/50">
               <CardContent className="p-4 text-center space-y-2">
-                <h4 className="font-medium text-orange-800">Total Setup Cost</h4>
+                <h4 className="font-medium text-orange-800">
+                  Total Setup Cost
+                </h4>
                 <div className="text-2xl font-bold text-green-600">$2.00</div>
-                <p className="text-sm text-orange-700">One-time setup fee to get started</p>
+                <p className="text-sm text-orange-700">
+                  One-time setup fee to get started
+                </p>
               </CardContent>
             </Card>
           )}
@@ -644,27 +723,37 @@ export default function OnboardingPage() {
                 <CardContent className="p-3 space-y-2">
                   <div className="flex items-center space-x-2">
                     <Sparkles className="w-4 h-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-800">Recommended Settings</span>
+                    <span className="text-sm font-medium text-green-800">
+                      Recommended Settings
+                    </span>
                   </div>
                   <p className="text-xs text-green-700">
-                    These defaults are optimized for new creators. You can customize them, but the
-                    defaults work great!
+                    These defaults are optimized for new creators. You can
+                    customize them, but the defaults work great!
                   </p>
                 </CardContent>
               </Card>
 
               {/* Vault Name */}
               <div className="space-y-2">
-                <Label htmlFor="vault-name" className="flex items-center space-x-2">
+                <Label
+                  htmlFor="vault-name"
+                  className="flex items-center space-x-2"
+                >
                   <span>Vault Name</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-100 text-green-700 text-xs"
+                  >
                     Recommended
                   </Badge>
                 </Label>
                 <Input
                   id="vault-name"
                   value={vaultConfig.name}
-                  onChange={(e) => setVaultConfig({ ...vaultConfig, name: e.target.value })}
+                  onChange={(e) =>
+                    setVaultConfig({ ...vaultConfig, name: e.target.value })
+                  }
                   className="rounded-xl"
                   placeholder="Creator Vault"
                 />
@@ -679,21 +768,23 @@ export default function OnboardingPage() {
                   <span>Network</span>
                 </Label>
                 <Select
-                  value={vaultConfig.network.toString()}
+                  disabled={true}
+                  value={config.state.chainId.toString()}
                   onValueChange={(value) =>
                     setVaultConfig({ ...vaultConfig, network: Number(value) })
                   }
                 >
-                  <SelectTrigger className="rounded-xl">
+                  <SelectTrigger className="rounded-xl" disabled>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="base">
-                      <div className="flex items-center space-x-2">
-                        <span>Base</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="celo">Celo</SelectItem>
+                    {config.chains.map((chain) => (
+                      <SelectItem value={`${chain.id}`} key={chain.id}>
+                        <div className="flex items-center space-x-2">
+                          <span>{chain.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500">
@@ -705,28 +796,46 @@ export default function OnboardingPage() {
               <div className="space-y-2">
                 <Label className="flex items-center space-x-2">
                   <span>Token to Save</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-100 text-green-700 text-xs"
+                  >
                     Recommended
                   </Badge>
                 </Label>
                 <Select
-                  value={vaultConfig.token}
-                  onValueChange={(value) => setVaultConfig({ ...vaultConfig, token: value })}
+                  value={vaultConfig.token.address}
+                  onValueChange={(value) =>
+                    setVaultConfig({
+                      ...vaultConfig,
+                      token: CONTRACT_ADDRESSES[
+                        config.chains
+                          .find((chain) => chain.id === config.state.chainId)
+                          ?.name.toUpperCase() ?? "BASE"
+                      ].STABLECOINS.find(
+                        (stablecoin) => stablecoin.address === value
+                      )!,
+                    })
+                  }
                 >
                   <SelectTrigger className="rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="usdc">
-                      <div className="flex items-center space-x-2">
-                        <span>USDC</span>
-                        <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
-                          Stable
-                        </Badge>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="eth">ETH</SelectItem>
-                    <SelectItem value="degen">DEGEN</SelectItem>
+                    {CONTRACT_ADDRESSES[
+                      config.chains
+                        .find((chain) => chain.id === config.state.chainId)
+                        ?.name.toUpperCase() ?? "BASE"
+                    ].STABLECOINS.map((stablecoin) => (
+                      <SelectItem
+                        value={stablecoin.address!}
+                        key={stablecoin.address}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span>{stablecoin.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500">
@@ -736,9 +845,15 @@ export default function OnboardingPage() {
 
               {/* Initial Amount */}
               <div className="space-y-2">
-                <Label htmlFor="initial-amount" className="flex items-center space-x-2">
+                <Label
+                  htmlFor="initial-amount"
+                  className="flex items-center space-x-2"
+                >
                   <span>Initial Amount (Optional)</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-100 text-green-700 text-xs"
+                  >
                     Start Small
                   </Badge>
                 </Label>
@@ -750,7 +865,9 @@ export default function OnboardingPage() {
                     id="initial-amount"
                     type="number"
                     value={vaultConfig.amount}
-                    onChange={(e) => setVaultConfig({ ...vaultConfig, amount: e.target.value })}
+                    onChange={(e) =>
+                      setVaultConfig({ ...vaultConfig, amount: e.target.value })
+                    }
                     className="pl-8 rounded-xl"
                     placeholder="0.00"
                   />
@@ -769,13 +886,18 @@ export default function OnboardingPage() {
                       ? "Unlock Anytime"
                       : `${vaultConfig.duration[0]} months`}
                   </span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-100 text-green-700 text-xs"
+                  >
                     Flexible
                   </Badge>
                 </Label>
                 <Slider
                   value={vaultConfig.duration}
-                  onValueChange={(value) => setVaultConfig({ ...vaultConfig, duration: value })}
+                  onValueChange={(value) =>
+                    setVaultConfig({ ...vaultConfig, duration: value })
+                  }
                   max={24}
                   min={0}
                   step={1}
@@ -792,9 +914,15 @@ export default function OnboardingPage() {
 
               {/* Penalty */}
               <div className="space-y-2">
-                <Label htmlFor="penalty" className="flex items-center space-x-2">
+                <Label
+                  htmlFor="penalty"
+                  className="flex items-center space-x-2"
+                >
                   <span>Early Withdrawal Penalty</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-100 text-green-700 text-xs"
+                  >
                     No Penalty
                   </Badge>
                 </Label>
@@ -803,7 +931,12 @@ export default function OnboardingPage() {
                     id="penalty"
                     type="number"
                     value={vaultConfig.penalty}
-                    onChange={(e) => setVaultConfig({ ...vaultConfig, penalty: e.target.value })}
+                    onChange={(e) =>
+                      setVaultConfig({
+                        ...vaultConfig,
+                        penalty: e.target.value,
+                      })
+                    }
                     className="pr-8 rounded-xl"
                     placeholder="0"
                   />
@@ -821,7 +954,9 @@ export default function OnboardingPage() {
                 <CardContent className="p-3 space-y-2">
                   <div className="flex items-center space-x-2">
                     <Info className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-800">Why These Defaults?</span>
+                    <span className="text-sm font-medium text-blue-800">
+                      Why These Defaults?
+                    </span>
                   </div>
                   <ul className="space-y-1 text-xs text-blue-700">
                     <li>
@@ -831,7 +966,8 @@ export default function OnboardingPage() {
                       • <strong>No penalty:</strong> Learn without pressure
                     </li>
                     <li>
-                      • <strong>Flexible duration:</strong> Access funds when needed
+                      • <strong>Flexible duration:</strong> Access funds when
+                      needed
                     </li>
                     <li>
                       • <strong>$0 start:</strong> Begin earning, then save
