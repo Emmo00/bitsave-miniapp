@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 import { Slider } from "../../components/ui/slider";
+import sdk from "@farcaster/miniapp-sdk";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -87,18 +88,25 @@ export default function OnboardingPage() {
 
     setIsProcessing(true);
 
-    // Simulate processing time
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Mark step as completed
-    setCompletedSteps((prev) => [...prev, stepId]);
-
-    // Move to next step or finish
-    if (stepId < totalSteps) {
-      setCurrentStep(stepId + 1);
+    if (stepId === 1) {
+      // Add miniapp to Farcaster
+      sdk.actions
+        .addMiniApp()
+        .then(() => {
+          console.log("Bitsave MiniApp added to Farcaster");
+          setCompletedSteps((prev) => [...prev, stepId]);
+          setCurrentStep(stepId + 1);
+          setIsProcessing(false);
+        })
+        .catch((error) => {
+          console.error("Error adding Bitsave MiniApp:", error);
+        });
     }
 
-    setIsProcessing(false);
+    if (stepId === 2) {
+      // Simulate payment processing
+      console.log("Processing payment for Bitsave membership...");
+    }
   };
 
   const handleCreateVault = async () => {
@@ -162,7 +170,7 @@ export default function OnboardingPage() {
               {isProcessing ? (
                 <div className="flex items-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Installing...</span>
+                  <span>Adding...</span>
                 </div>
               ) : isStepCompleted(1) ? (
                 <div className="flex items-center space-x-2">
@@ -171,7 +179,7 @@ export default function OnboardingPage() {
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
-                  <ExternalLink className="w-4 h-4" />
+                  <Plus className="w-4 h-4" />
                   <span>Add to Farcaster</span>
                 </div>
               )}
@@ -316,7 +324,7 @@ export default function OnboardingPage() {
         <div className="p-6 space-y-6">
           {/* Header */}
           <div className="flex items-center space-x-4">
-            <Button size="icon" onClick={() => router.push("/landing")}>
+            <Button size="icon" variant={"secondary"} onClick={() => router.push("/landing")}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
@@ -370,13 +378,15 @@ export default function OnboardingPage() {
           </Card>
 
           {/* Total Cost */}
-          <Card className="border-orange-200 bg-orange-50/50">
-            <CardContent className="p-4 text-center space-y-2">
-              <h4 className="font-medium text-orange-800">Total Setup Cost</h4>
-              <div className="text-2xl font-bold text-green-600">$2.00</div>
-              <p className="text-sm text-orange-700">One-time setup fee to get started</p>
-            </CardContent>
-          </Card>
+          {currentStep !== 1 && (
+            <Card className="border-orange-200 bg-orange-50/50">
+              <CardContent className="p-4 text-center space-y-2">
+                <h4 className="font-medium text-orange-800">Total Setup Cost</h4>
+                <div className="text-2xl font-bold text-green-600">$2.00</div>
+                <p className="text-sm text-orange-700">One-time setup fee to get started</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
       {/* Vault Configuration Modal */}

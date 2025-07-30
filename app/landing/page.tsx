@@ -16,6 +16,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     sdk.actions.ready(); // Notify the SDK that the miniapp is ready
+    console.log("Bitsave miniapp is ready");
   }, []);
 
   return (
