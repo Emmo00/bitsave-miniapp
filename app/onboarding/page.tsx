@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAccount, useConnect } from "wagmi";
+import { readContract, switchChain } from "@wagmi/core";
+import bitsaveABI from "../../abi/BitSave.json";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Progress } from "../../components/ui/progress";
@@ -12,10 +15,10 @@ import {
   PiggyBank,
   Users,
   CheckCircle,
-  ExternalLink,
   Wallet,
   Sparkles,
   Info,
+  Link,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { Input } from "../../components/ui/input";
@@ -29,24 +32,36 @@ import {
 } from "../../components/ui/select";
 import { Slider } from "../../components/ui/slider";
 import sdk from "@farcaster/miniapp-sdk";
+import { config } from "../../components/providers/WagmiProvider";
 
 export default function OnboardingPage() {
   const router = useRouter();
+
+  const { isConnected, address } = useAccount();
+  const { connect, connectors } = useConnect();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showVaultModal, setShowVaultModal] = useState(false);
-  const [vaultConfig, setVaultConfig] = useState({
+  const [selectedChain, setSelectedChain] = useState<(typeof config)["chains"][number]["id"]>(
+    config.chains[0].id
+  );
+  const [vaultConfig, setVaultConfig] = useState<{
+    name: string;
+    network: number;
+    token: string;
+    amount: string;
+    penalty: string;
+    duration: number[];
+  }>({
     name: "Creator Vault",
-    network: "base",
+    network: config.chains[0].id,
     token: "usdc",
     amount: "0",
     penalty: "0",
     duration: [0], // 0 means unlock anytime
   });
-
-  const totalSteps = 3;
-  const progress = (currentStep / totalSteps) * 100;
 
   const steps = [
     {
@@ -59,6 +74,14 @@ export default function OnboardingPage() {
     },
     {
       id: 2,
+      title: "Choose Chain",
+      description: "Select the chain you want to use for your vault",
+      cost: "Free",
+      icon: <Link className="w-6 h-6" />,
+      color: "yellow",
+    },
+    {
+      id: 3,
       title: "Join Bitsave",
       description: "Become a member of the Bitsave community",
       cost: "$1.00",
@@ -66,7 +89,7 @@ export default function OnboardingPage() {
       color: "blue",
     },
     {
-      id: 3,
+      id: 4,
       title: "Create Creator Vault",
       description: "Set up your first savings vault to start earning",
       cost: "$1.00",
@@ -75,12 +98,16 @@ export default function OnboardingPage() {
     },
   ];
 
+  const joiningFee = 1; // Set the joining fee for Bitsave membership (Dollars)
+  const totalSteps = steps.length;
+  const progress = (currentStep / totalSteps) * 100;
+
   const isStepCompleted = (stepId: number) => completedSteps.includes(stepId);
   const isStepActive = (stepId: number) => stepId === currentStep;
   const isStepAccessible = (stepId: number) => stepId <= currentStep;
 
   const handleStepAction = async (stepId: number) => {
-    if (stepId === 3) {
+    if (stepId === 4) {
       // Open vault configuration modal instead of directly processing
       setShowVaultModal(true);
       return;
@@ -94,18 +121,32 @@ export default function OnboardingPage() {
         .addMiniApp()
         .then(() => {
           console.log("Bitsave MiniApp added to Farcaster");
-          setCompletedSteps((prev) => [...prev, stepId]);
+          setCompletedSteps((prev) => [...prev, 1]);
           setCurrentStep(stepId + 1);
           setIsProcessing(false);
         })
         .catch((error) => {
           console.error("Error adding Bitsave MiniApp:", error);
+          setCompletedSteps((prev) => [...prev, 1]); // debug
+          console.log("Skipping to next step due to error");
+          setCurrentStep(stepId + 1);
+          setIsProcessing(false);
         });
     }
 
-    if (stepId === 2) {
-      // Simulate payment processing
-      console.log("Processing payment for Bitsave membership...");
+    if (stepId === 3) {
+      // process joining transaction
+      if (!isConnected) {
+        // make sure is connected
+        connect({ connector: connectors[0] });
+      }
+
+      // const childContract = await readContract(config,{
+      //   address: "0x...",
+      //   abi: [bitsaveABI],
+      //   functionName: "joinBitsave",
+      //   args: [address],
+      // });
     }
   };
 
@@ -126,6 +167,20 @@ export default function OnboardingPage() {
 
     setIsProcessing(false);
   };
+
+  useEffect(() => {
+    const switchSelectedChain = async () => {
+      localStorage.setItem("_bitsave_chain", selectedChain.toString());
+      console.log("Switched to chain:", selectedChain);
+      // switch chain in Farcaster SDK
+      await sdk.wallet.ethProvider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: selectedChain.toString() }],
+      });
+      console.log(config.state.chainId);
+    };
+    switchSelectedChain();
+  }, [selectedChain]);
 
   const getStepContent = (step: (typeof steps)[0]) => {
     switch (step.id) {
@@ -187,7 +242,75 @@ export default function OnboardingPage() {
           </div>
         );
 
-      case 2:
+      case 2: // choose wallet
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto">
+                <Link className="w-8 h-8 text-yellow-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Choose Chain</h3>
+              <p className="text-sm text-gray-600 max-w-sm mx-auto">
+                Select the chain you want to use for your vault. Base is recommended for lowest
+                fees.
+              </p>
+            </div>
+
+            <Card className="border-yellow-200 bg-yellow-50/50">
+              <CardContent className="p-4 space-y-3">
+                <Label className="flex items-center space-x-2">
+                  <span>Chain</span>
+                </Label>
+                <Select
+                  value={`${selectedChain}`}
+                  onValueChange={(value) => {
+                    setVaultConfig({ ...vaultConfig, network: Number(value) });
+                    setSelectedChain(Number(value) as (typeof config)["chains"][number]["id"]); // track global chain state
+                  }}
+                >
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {config.chains.map((chain) => (
+                      <SelectItem value={`${chain.id}`} key={chain.id}>
+                        <div className="flex items-center space-x-2">
+                          <span>{chain.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Base offers the low transaction fees for creators
+                </p>
+              </CardContent>
+            </Card>
+
+            <Button
+              onClick={() => {
+                setCompletedSteps((prev) => [...prev, 2]);
+                setCurrentStep(3);
+              }}
+              disabled={isProcessing || isStepCompleted(2)}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 h-12"
+            >
+              {isStepCompleted(2) ? (
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Chain Selected</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Link className="w-4 h-4" />
+                  <span>Continue</span>
+                </div>
+              )}
+            </Button>
+          </div>
+        );
+
+      case 3:
         return (
           <div className="space-y-4">
             <div className="text-center space-y-3">
@@ -228,8 +351,8 @@ export default function OnboardingPage() {
             </Card>
 
             <Button
-              onClick={() => handleStepAction(2)}
-              disabled={isProcessing || isStepCompleted(2) || !isStepCompleted(1)}
+              onClick={() => handleStepAction(3)}
+              disabled={isProcessing || isStepCompleted(3) || !isStepCompleted(2)}
               className="w-full bg-blue-500 hover:bg-blue-600 h-12"
             >
               {isProcessing ? (
@@ -237,7 +360,7 @@ export default function OnboardingPage() {
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   <span>Processing Payment...</span>
                 </div>
-              ) : isStepCompleted(2) ? (
+              ) : isStepCompleted(3) ? (
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4" />
                   <span>Joined</span>
@@ -245,14 +368,14 @@ export default function OnboardingPage() {
               ) : (
                 <div className="flex items-center space-x-2">
                   <Wallet className="w-4 h-4" />
-                  <span>Join for $1.00</span>
+                  <span>Join for ${joiningFee}.00</span>
                 </div>
               )}
             </Button>
           </div>
         );
 
-      case 3:
+      case 4:
         return (
           <div className="space-y-4">
             <div className="text-center space-y-3">
@@ -324,7 +447,14 @@ export default function OnboardingPage() {
         <div className="p-6 space-y-6">
           {/* Header */}
           <div className="flex items-center space-x-4">
-            <Button size="icon" variant={"secondary"} onClick={() => router.push("/landing")}>
+            <Button
+              size="icon"
+              variant={"secondary"}
+              onClick={() => {
+                if (currentStep === 1) router.push("/landing");
+                else setCurrentStep(currentStep - 1);
+              }}
+            >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
@@ -439,13 +569,12 @@ export default function OnboardingPage() {
               <div className="space-y-2">
                 <Label className="flex items-center space-x-2">
                   <span>Network</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
-                    Recommended
-                  </Badge>
                 </Label>
                 <Select
-                  value={vaultConfig.network}
-                  onValueChange={(value) => setVaultConfig({ ...vaultConfig, network: value })}
+                  value={vaultConfig.network.toString()}
+                  onValueChange={(value) =>
+                    setVaultConfig({ ...vaultConfig, network: Number(value) })
+                  }
                 >
                   <SelectTrigger className="rounded-xl">
                     <SelectValue />
@@ -454,16 +583,13 @@ export default function OnboardingPage() {
                     <SelectItem value="base">
                       <div className="flex items-center space-x-2">
                         <span>Base</span>
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
-                          Low Fees
-                        </Badge>
                       </div>
                     </SelectItem>
                     <SelectItem value="celo">Celo</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500">
-                  Base offers the lowest transaction fees for creators
+                  Base offers low transaction fees for creators
                 </p>
               </div>
 
