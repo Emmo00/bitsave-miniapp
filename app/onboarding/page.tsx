@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useConnect } from "wagmi";
-import { readContract, switchChain } from "@wagmi/core";
-import bitsaveABI from "../../abi/BitSave.json";
+import { switchChain } from "../../onchain/actions";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Progress } from "../../components/ui/progress";
@@ -33,6 +32,11 @@ import {
 import { Slider } from "../../components/ui/slider";
 import sdk from "@farcaster/miniapp-sdk";
 import { config } from "../../components/providers/WagmiProvider";
+import {
+  getUserChildContract,
+  getUserChildContractFromAnyChain,
+  getUserVaultNames,
+} from "../../onchain/reads";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -62,6 +66,87 @@ export default function OnboardingPage() {
     penalty: "0",
     duration: [0], // 0 means unlock anytime
   });
+
+  const [isAMember, setIsAMember] = useState(false);
+  const [isVaultCreated, setIsVaultCreated] = useState(false);
+
+  useEffect(() => {
+    // connect wallet if not connected
+    if (!isConnected) {
+      connect({ connector: connectors[0] }); // Connect to Farcaster Frame by default
+    }
+  }, []);
+
+  useEffect(() => {
+    // switch chain when selectedChain changes
+    const switchSelectedChain = async () => {
+      console.log("Switched to chain:", selectedChain);
+      // switch chain in Farcaster SDK
+      await switchChain(selectedChain.toString());
+      console.log(config.state.chainId);
+    };
+    switchSelectedChain();
+  }, [selectedChain]);
+
+  useEffect(() => {
+    // check and set membership flag
+    sdk.actions.ready(); // Notify the SDK that the miniapp is ready
+    console.log("Bitsave miniapp is ready");
+
+    // Check if user is already a member
+    const checkMembership = async () => {
+      if (!isConnected || !address) return;
+
+      try {
+        const result = await getUserChildContractFromAnyChain(address.toLowerCase());
+        if (!result) {
+          console.log("User is not a member of Bitsave");
+          setIsAMember(false);
+          return;
+        }
+        const { childContract, chainId } = result;
+        setIsAMember(!!childContract);
+        await switchChain(chainId.toString()); // Switch to the chain of the child contract
+        console.log(`User is a member of Bitsave on chain ${chainId}`);
+      } catch (error) {
+        console.error("Error checking membership:", error);
+      }
+    };
+
+    checkMembership();
+  }, [isConnected, address]);
+
+  useEffect(() => {
+    // get user vault names if member
+    const fetchUserVaults = async () => {
+      if (!isConnected || !address || !isAMember) return;
+
+      try {
+        const result = await getUserChildContractFromAnyChain(address.toLowerCase());
+        if (!result) {
+          console.log("User has no child contract or is not a member");
+          return;
+        }
+        const { childContract, chainId } = result;
+        if (childContract) {
+          const vaultNames = await getUserVaultNames(childContract);
+          setIsVaultCreated(vaultNames.length > 0);
+          console.log("User vaults:", vaultNames);
+          await switchChain(chainId.toString()); // Switch to the chain of the child contract
+        }
+      } catch (error) {
+        console.error("Error fetching user vaults:", error);
+      }
+    };
+    fetchUserVaults();
+  }, [isConnected, address, isAMember]);
+
+  useEffect(() => {
+    // redirect to dashboard if isVaultCreated
+    if (isVaultCreated) {
+      router.push("/dashboard");
+    }
+  }, [isVaultCreated]);
 
   const steps = [
     {
@@ -99,8 +184,8 @@ export default function OnboardingPage() {
   ];
 
   const joiningFee = 1; // Set the joining fee for Bitsave membership (Dollars)
+  const savingFee = 1; // Set the saving fee for creating a vault (Dollars)
   const totalSteps = steps.length;
-  const progress = (currentStep / totalSteps) * 100;
 
   const isStepCompleted = (stepId: number) => completedSteps.includes(stepId);
   const isStepActive = (stepId: number) => stepId === currentStep;
@@ -167,20 +252,6 @@ export default function OnboardingPage() {
 
     setIsProcessing(false);
   };
-
-  useEffect(() => {
-    const switchSelectedChain = async () => {
-      localStorage.setItem("_bitsave_chain", selectedChain.toString());
-      console.log("Switched to chain:", selectedChain);
-      // switch chain in Farcaster SDK
-      await sdk.wallet.ethProvider.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: selectedChain.toString() }],
-      });
-      console.log(config.state.chainId);
-    };
-    switchSelectedChain();
-  }, [selectedChain]);
 
   const getStepContent = (step: (typeof steps)[0]) => {
     switch (step.id) {
@@ -311,7 +382,7 @@ export default function OnboardingPage() {
         );
 
       case 3:
-        return (
+        return !isAMember ? (
           <div className="space-y-4">
             <div className="text-center space-y-3">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
@@ -371,6 +442,28 @@ export default function OnboardingPage() {
                   <span>Join for ${joiningFee}.00</span>
                 </div>
               )}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Already a Member</h3>
+              <p className="text-sm text-gray-600 max-w-sm mx-auto">
+                You are already a member of the Bitsave community. Proceed to create your vault.
+              </p>
+            </div>
+            <Button
+              onClick={() => setCurrentStep(4)}
+              disabled={isProcessing || isStepCompleted(3)}
+              className="w-full bg-blue-500 hover:bg-blue-600 h-12"
+            >
+              <div className="flex items-center space-x-2">
+                <Wallet className="w-4 h-4" />
+                <span>Proceed to Create Vault</span>
+              </div>
             </Button>
           </div>
         );

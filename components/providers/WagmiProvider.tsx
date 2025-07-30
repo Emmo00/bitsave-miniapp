@@ -1,5 +1,5 @@
 import { createConfig, http, WagmiProvider } from "wagmi";
-import { base, celo } from "wagmi/chains";
+import { base, baseSepolia, celo, celoAlfajores } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 import { coinbaseWallet, metaMask } from "wagmi/connectors";
@@ -42,12 +42,17 @@ function useCoinbaseWalletAutoConnect() {
   return isCoinbaseWallet;
 }
 
+const chains =
+  process.env.NEXT_PUBLIC_ENV === "production"
+    ? ([base, celo] as const)
+    : ([baseSepolia, celoAlfajores] as const);
+
 export const config = createConfig({
-  chains: [base, celo],
-  transports: {
-    [base.id]: http(),
-    [celo.id]: http(),
-  },
+  chains,
+  transports: chains.reduce(
+    (acc, chain) => ({ ...acc, [chain.id]: http() }),
+    {} as Record<(typeof chains)[number]["id"], ReturnType<typeof http>>
+  ),
   connectors: [
     farcasterFrame(),
     coinbaseWallet({

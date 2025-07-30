@@ -7,17 +7,14 @@ import { Card, CardContent } from "../../components/ui/card";
 import { PiggyBank, Trophy, Bell, ArrowRight, Sparkles, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import sdk from "@farcaster/miniapp-sdk";
-import {
-  getUserChildContract,
-  getUserVaultNames,
-  getUserChildContractFromAnyChain,
-} from "../../onchain/reads";
+import { getUserVaultNames, getUserChildContractFromAnyChain } from "../../onchain/reads";
 import { switchChain } from "../../onchain/actions";
 
 export default function LandingPage() {
   const router = useRouter();
 
-  const [isAMember, setIsAMember] = useState(false);
+  const [isCheckingMembership, setIsCheckingMembership] = useState(true);
+
   const [isVaultCreated, setIsVaultCreated] = useState(false);
 
   const { isConnected, address } = useAccount();
@@ -35,24 +32,25 @@ export default function LandingPage() {
   useEffect(() => {
     // get user vault names if member
     const fetchUserVaults = async () => {
-      if (!isConnected || !address || !isAMember) return;
+      if (!isConnected || !address) return;
 
       try {
         const result = await getUserChildContractFromAnyChain(address.toLowerCase());
         console.log("User child contract result:", result);
-        setIsAMember(!!result);
         if (result && result.childContract) {
           const vaultNames = await getUserVaultNames(result.childContract);
           setIsVaultCreated(vaultNames.length > 0);
           // switch chain
           await switchChain(result.chainId.toString());
         }
+
+        setIsCheckingMembership(false);
       } catch (error) {
         console.error("Error fetching user vaults:", error);
       }
     };
     fetchUserVaults();
-  }, [isConnected, address, isAMember]);
+  }, [isConnected, address]);
 
   const handleGetStarted = () => {
     if (isVaultCreated) {
@@ -87,6 +85,7 @@ export default function LandingPage() {
             </p>
             <Button
               onClick={handleGetStarted}
+              disabled={isCheckingMembership}
               className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-8 py-3 rounded-full text-lg font-medium"
             >
               Start Saving
