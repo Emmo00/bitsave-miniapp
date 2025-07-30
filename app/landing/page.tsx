@@ -1,17 +1,65 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useAccount, useConnect } from "wagmi";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 import { PiggyBank, Trophy, Bell, ArrowRight, Sparkles, TrendingUp } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import sdk from "@farcaster/miniapp-sdk";
+import {
+  getUserChildContract,
+  getUserVaultNames,
+  getUserChildContractFromAnyChain,
+} from "../../onchain/reads";
+import { switchChain } from "../../onchain/actions";
 
 export default function LandingPage() {
   const router = useRouter();
 
+  const [isAMember, setIsAMember] = useState(false);
+  const [isVaultCreated, setIsVaultCreated] = useState(false);
+
+  const { isConnected, address } = useAccount();
+  const { connect, connectors } = useConnect();
+
+  useEffect(() => {
+    // connect wallet if not connected
+    if (!isConnected) {
+      connect({ connector: connectors[0] }); // Connect to Farcaster Wallet by default
+      console.log("Connecting to Farcaster Wallet...");
+    }
+    console.log("Connected address:", address);
+  }, []);
+
+  useEffect(() => {
+    // get user vault names if member
+    const fetchUserVaults = async () => {
+      if (!isConnected || !address || !isAMember) return;
+
+      try {
+        const result = await getUserChildContractFromAnyChain(address.toLowerCase());
+        console.log("User child contract result:", result);
+        setIsAMember(!!result);
+        if (result && result.childContract) {
+          const vaultNames = await getUserVaultNames(result.childContract);
+          setIsVaultCreated(vaultNames.length > 0);
+          // switch chain
+          await switchChain(result.chainId.toString());
+        }
+      } catch (error) {
+        console.error("Error fetching user vaults:", error);
+      }
+    };
+    fetchUserVaults();
+  }, [isConnected, address, isAMember]);
+
   const handleGetStarted = () => {
-    router.push("/onboarding");
+    if (isVaultCreated) {
+      router.push("/dashboard");
+    } else {
+      router.push("/onboarding");
+    }
   };
 
   useEffect(() => {

@@ -10,7 +10,7 @@ export const CONTRACT_ADDRESSES = {
       },
     ],
   },
-  celo: {
+  CELO: {
     BITSAVE: process.env.NEXT_CELO_BITSAVE_CONTRACT_ADDRESS,
     STABLECOINS: [
       {
