@@ -1,6 +1,6 @@
-import { writeContract } from "@wagmi/core";
+import { writeContract, simulateContract } from "@wagmi/core";
 import BITSAVE_ABI from "../abi/BitSave.json";
-import { CONTRACT_ADDRESSES } from "../constants/addresses";
+import CONTRACT_ADDRESSES from "../constants/addresses";
 import { config } from "../components/providers/WagmiProvider";
 import { getJoinFeeInNativeTokenBasedOnChain } from "../onchain/actions";
 import { Address, parseEther } from "viem";
@@ -14,12 +14,21 @@ export async function joinBitSave(joinFeeInDollars: number) {
   let contractAddress = CONTRACT_ADDRESSES[chainName]?.BITSAVE;
   if (!contractAddress) throw new Error("Contract address not found");
 
-  const result = await writeContract(config, {
+  config.connectors[0].getChainId = async () => chainId; // Ensure the connector uses the correct chain ID
+
+  const { request, result } = await simulateContract(config, {
     abi: BITSAVE_ABI,
     address: contractAddress as Address,
-    functionName: "joinBitSave",
+    functionName: "joinBitsave",
     value: parseEther(await getJoinFeeInNativeTokenBasedOnChain(chainId, joinFeeInDollars)),
+    connector: config.connectors[0],
   });
 
-  return result;
+  console.log("Simulated join BitSave transaction result:", result);
+
+  const writeResult = await writeContract(config, request);
+
+  console.log("Join BitSave transaction result:", writeResult);
+
+  return writeResult;
 }

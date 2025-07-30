@@ -1,4 +1,20 @@
-export const CONTRACT_ADDRESSES = {
+type Stablecoin = {
+  name: string;
+  image: string;
+  address: string | undefined;
+  decimals: number;
+};
+
+type NetworkAddresses = {
+  BITSAVE: string | undefined;
+  STABLECOINS: Stablecoin[];
+};
+
+type ContractAddresses = {
+  [network: string]: NetworkAddresses;
+};
+
+let CONTRACT_ADDRESSES: ContractAddresses = {
   BASE: {
     BITSAVE: process.env.NEXT_PUBLIC_BASE_BITSAVE_CONTRACT_ADDRESS,
     STABLECOINS: [
@@ -34,3 +50,8 @@ export const CONTRACT_ADDRESSES = {
     ],
   },
 };
+
+CONTRACT_ADDRESSES["BASE SEPOLIA"] = CONTRACT_ADDRESSES["BASE"];
+CONTRACT_ADDRESSES["ALFAJORES"] = CONTRACT_ADDRESSES["CELO"];
+
+export default CONTRACT_ADDRESSES;

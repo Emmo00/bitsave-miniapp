@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount, useConnect } from "wagmi";
+import { BaseError, useAccount, useConnect } from "wagmi";
 import { switchChain } from "../../onchain/actions";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
@@ -37,9 +37,13 @@ import {
   getUserChildContractFromAnyChain,
   getUserVaultNames,
 } from "../../onchain/reads";
+import { joinBitSave } from "../../onchain/writes";
+import { useToast } from "../../hooks/useToast";
+import { WriteContractErrorType } from "@wagmi/core";
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const toast = useToast();
 
   const { isConnected, address } = useAccount();
   const { connect, connectors } = useConnect();
@@ -123,6 +127,7 @@ export default function OnboardingPage() {
 
       try {
         const result = await getUserChildContractFromAnyChain(address.toLowerCase());
+        console.log("User child contract result [onboarding]:", result);
         if (!result) {
           console.log("User has no child contract or is not a member");
           return;
@@ -226,12 +231,22 @@ export default function OnboardingPage() {
         connect({ connector: connectors[0] });
       }
 
-      // const childContract = await readContract(config,{
-      //   address: "0x...",
-      //   abi: [bitsaveABI],
-      //   functionName: "joinBitsave",
-      //   args: [address],
-      // });
+      // make transaction to join Bitsave
+      try {
+        const transactionHash = await joinBitSave(joiningFee);
+        console.log("Transaction successful:", transactionHash);
+        toast.success("Transaction Successfull", "Successfully joined BitSave");
+        setCompletedSteps((prev) => [...prev, 3]);
+        setCurrentStep(stepId + 1);
+        setIsProcessing(false);
+      } catch (error) {
+        console.error("Error joining Bitsave:", error);
+        toast.error(
+          "Transaction Failed",
+          (error as BaseError).shortMessage || "Failed to join BitSave. Please try again."
+        );
+        setIsProcessing(false);
+      }
     }
   };
 

@@ -36,9 +36,10 @@ export default function LandingPage() {
 
       try {
         const result = await getUserChildContractFromAnyChain(address.toLowerCase());
-        console.log("User child contract result:", result);
+        console.log("User child contract result [landing]:", result);
         if (result && result.childContract) {
           const vaultNames = await getUserVaultNames(result.childContract);
+          console.log("User vault names:", vaultNames);
           setIsVaultCreated(vaultNames.length > 0);
           // switch chain
           await switchChain(result.chainId.toString());
