@@ -54,7 +54,7 @@ export async function createSavingsVault(
     duration: number[];
   }
 ) {
-  const maturityTime = Date.now() / 1000 + duration[0] * 24 * 60 * 60; // Current time in seconds + duration in seconds
+  const maturityTime = Math.floor(Date.now() / 1000 + duration[0] * 24 * 60 * 60) + 5 * 60; // Current time in seconds + duration in seconds + 5 minutes buffer
 
   const chainId = config.state.chainId;
   const chainName = (config.chains
