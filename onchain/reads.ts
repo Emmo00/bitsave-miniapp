@@ -6,11 +6,12 @@ import CHILDCONTRACT_ABI from "../abi/ChildContract.json";
 import { CONTRACT_ADDRESSES } from "../constants/addresses";
 import { Address } from "viem";
 
+type SupportedChains = keyof typeof CONTRACT_ADDRESSES;
+
 export async function getUserChildContract(
   userAccount: string,
   chainId: number = config.state.chainId
 ) {
-  type SupportedChains = keyof typeof CONTRACT_ADDRESSES;
   const chainName = (config.chains.find((chain) => chain.id === chainId)?.name.toUpperCase() ??
     "BASE") as SupportedChains;
   let contractAddress = CONTRACT_ADDRESSES[chainName]?.BITSAVE;

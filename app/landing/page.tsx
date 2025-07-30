@@ -85,7 +85,7 @@ export default function LandingPage() {
             </p>
             <Button
               onClick={handleGetStarted}
-              disabled={isCheckingMembership}
+              disabled={isCheckingMembership && isConnected}
               className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-8 py-3 rounded-full text-lg font-medium"
             >
               Start Saving
