@@ -155,7 +155,7 @@ export default function OnboardingPage() {
         const { childContract, chainId } = result;
         if (childContract) {
           const vaultNames = await getUserVaultNames(childContract);
-          // setIsVaultCreated(vaultNames.length > 0);
+          setIsVaultCreated(vaultNames.length > 0);
           console.log("User vaults:", vaultNames);
           await switchChain(chainId.toString()); // Switch to the chain of the child contract
         }
