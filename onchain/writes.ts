@@ -1,9 +1,11 @@
-import { writeContract, simulateContract } from "@wagmi/core";
+import { writeContract, simulateContract, sendCalls } from "@wagmi/core";
 import BITSAVE_ABI from "../abi/BitSave.json";
+import CHILD_CONTRACT_ABI from "../abi/ChildContract.json";
+import STABLECOIN_ABI from "../abi/ERC20.json";
 import CONTRACT_ADDRESSES, { Stablecoin } from "../constants/addresses";
 import { config } from "../components/providers/WagmiProvider";
 import { getJoinFeeInNativeTokenBasedOnChain } from "../onchain/actions";
-import { Address, parseEther } from "viem";
+import { Address, parseEther, parseUnits } from "viem";
 
 type SupportedChains = keyof typeof CONTRACT_ADDRESSES;
 
@@ -54,9 +56,10 @@ export async function createSavingsVault(
     duration: number[];
   }
 ) {
-  const maturityTime = Math.floor(Date.now() / 1000 + duration[0] * 24 * 60 * 60) + 5 * 60; // Current time in seconds + duration in seconds + 5 minutes buffer
+  const maturityTime =
+    Math.floor(Date.now() / 1000 + duration[0] * 24 * 60 * 60) + 15 * 60; // Current time in seconds + duration in seconds + 15 minutes buffer
 
-  const chainId = config.state.chainId;
+  const chainId = network;
   const chainName = (config.chains
     .find((chain) => chain.id === chainId)
     ?.name.toUpperCase() ?? "BASE") as SupportedChains;
@@ -65,8 +68,21 @@ export async function createSavingsVault(
 
   config.connectors[0].getChainId = async () => chainId; // Ensure the connector uses the correct chain ID
 
-  const { request, result } = await simulateContract(config, {
-    abi: BITSAVE_ABI,
+  // Approve token transfer
+  const approveRequest = await simulateContract(config, {
+    abi: STABLECOIN_ABI,
+    address: token.address as Address,
+    functionName: "approve",
+    args: [contractAddress, parseUnits(amount, token.decimals)],
+    connector: config.connectors[0],
+  });
+
+  const approveResult = await writeContract(config, approveRequest.request);
+  console.log("Approve transaction result:", approveResult);
+
+  // Create savings vault
+  const createRequest = await simulateContract(config, {
+    abi: [...BITSAVE_ABI, ...CHILD_CONTRACT_ABI],
     address: contractAddress as Address,
     functionName: "createSaving",
     value: parseEther(
@@ -78,16 +94,15 @@ export async function createSavingsVault(
       penalty, // Penalty percentage
       false, // Is save mode
       token.address as Address, // Stablecoin address
-      amount, // Amount in stablecoin
+      parseUnits(amount, token.decimals), // Amount in stablecoin
     ],
     connector: config.connectors[0],
   });
 
-  console.log("Simulated create Savings Vault transaction result:", result);
+  const createResult = await writeContract(config, createRequest.request);
+  console.log("Create savings vault transaction result:", createResult);
 
-  const writeResult = await writeContract(config, request);
+  const id = createResult;
 
-  console.log("Create Savings Vault transaction result:", writeResult);
-
-  return writeResult;
+  console.log("Transaction ID:", id);
 }

@@ -40,7 +40,7 @@ export default function LandingPage() {
         if (result && result.childContract) {
           const vaultNames = await getUserVaultNames(result.childContract);
           console.log("User vault names:", vaultNames);
-          setIsVaultCreated(vaultNames.length > 0);
+          // setIsVaultCreated(vaultNames.length > 0);
           // switch chain
           await switchChain(result.chainId.toString());
         }
