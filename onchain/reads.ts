@@ -12,11 +12,17 @@ export async function getUserChildContract(
   userAccount: string,
   chainId: number = config.state.chainId
 ) {
-  const chainName = (config.chains.find((chain) => chain.id === chainId)?.name.toUpperCase() ??
-    "BASE") as SupportedChains;
+  const chainName = (config.chains
+    .find((chain) => chain.id === chainId)
+    ?.name.toUpperCase() ?? "BASE") as SupportedChains;
   console.log("contract addresses", CONTRACT_ADDRESSES);
   let contractAddress = CONTRACT_ADDRESSES[chainName]?.BITSAVE;
-  console.log("Using contract address:", contractAddress, "for chain:", chainName);
+  console.log(
+    "Using contract address:",
+    contractAddress,
+    "for chain:",
+    chainName
+  );
   if (!contractAddress) throw new Error("Contract address not found");
 
   return (await readContract(config, {
@@ -39,7 +45,10 @@ export async function getUserChildContractFromAnyChain(userAccount: string) {
       console.log(`Found child contract on ${chain.name}:`, childContract);
       if (childContract) return { childContract, chainId: chain.id };
     } catch (error) {
-      console.error(`Error fetching user child contract on ${chain.name}:`, error);
+      console.error(
+        `Error fetching user child contract on ${chain.name}:`,
+        error
+      );
     }
   }
   return null; // No child contract found on any chain
@@ -53,4 +62,48 @@ export async function getUserVaultNames(childContract: string) {
   })) as { savingsNames: string[] };
 
   return result.savingsNames;
+}
+
+export async function getSaving(childContract: string, savingName: string) {
+  const result = (await readContract(config, {
+    abi: CHILDCONTRACT_ABI,
+    address: childContract as Address,
+    functionName: "getSaving",
+    args: [savingName],
+  })) as {
+    isValid: boolean;
+    amount: bigint;
+    tokenId: string;
+    interestAccumulated: bigint;
+    startTime: bigint;
+    penaltyPercentage: bigint;
+    maturityTime: bigint;
+    isSafeMode: boolean;
+  };
+
+  return result;
+}
+
+export async function getAllUserSavings(childContract: string) {
+  // First get all savings names
+  const savingsNames = await getUserVaultNames(childContract);
+
+  console.log("User savings names:", savingsNames);
+
+  // Then get all savings data
+  const savingsPromises = savingsNames.map(async (name) => {
+    const savingData = await getSaving(childContract, name);
+    return {
+      name,
+      ...savingData,
+    };
+  });
+
+  const allSavings = await Promise.all(savingsPromises);
+
+  console.log("All user savings:", allSavings);
+
+  // Return all savings (both valid and invalid)
+  // Invalid savings (isValid = false) are completed/withdrawn savings
+  return allSavings;
 }
