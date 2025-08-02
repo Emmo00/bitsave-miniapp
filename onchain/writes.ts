@@ -68,17 +68,19 @@ export async function createSavingsVault(
 
   config.connectors[0].getChainId = async () => chainId; // Ensure the connector uses the correct chain ID
 
-  // Approve token transfer
-  const approveRequest = await simulateContract(config, {
-    abi: STABLECOIN_ABI,
-    address: token.address as Address,
-    functionName: "approve",
-    args: [contractAddress, parseUnits(amount, token.decimals)],
-    connector: config.connectors[0],
-  });
+  // Approve token transfer only if amount > 0
+  if (parseFloat(amount) > 0) {
+    const approveRequest = await simulateContract(config, {
+      abi: STABLECOIN_ABI,
+      address: token.address as Address,
+      functionName: "approve",
+      args: [contractAddress, parseUnits(amount, token.decimals)],
+      connector: config.connectors[0],
+    });
 
-  const approveResult = await writeContract(config, approveRequest.request);
-  console.log("Approve transaction result:", approveResult);
+    const approveResult = await writeContract(config, approveRequest.request);
+    console.log("Approve transaction result:", approveResult);
+  }
 
   // Create savings vault
   const createRequest = await simulateContract(config, {
