@@ -8,28 +8,30 @@ import { Progress } from "../../components/ui/progress";
 import { PiggyBank, Coins, Plus, Bell, ArrowRight, Waves, Handshake } from "lucide-react";
 import { BottomNav } from "../../components/bottom-nav";
 import { NotificationBell } from "../../components/notification-bell";
+import { useTotalSaved } from "../../hooks/useTotalSaved";
+import { useActiveSavings } from "../../hooks/useActiveSavings";
+import { useEffect } from "react";
 
 export default function Dashboard() {
   const router = useRouter();
+  const { totalAmount, totalRewards, savingsCount, isLoading, error } = useTotalSaved();
+  const { activeSavings, isLoading: activeSavingsLoading } = useActiveSavings();
 
-  const mockVaults = [
-    {
-      id: 1,
-      name: "Creator Fund",
-      saved: 245,
-      target: 1000,
-      progress: 24.5,
-      rewards: 12.3,
-    },
-    {
-      id: 2,
-      name: "Equipment Upgrade",
-      saved: 89,
-      target: 500,
-      progress: 17.8,
-      rewards: 4.5,
-    },
-  ];
+  useEffect(() => {
+    if (!activeSavingsLoading) {
+      console.log("Active Savings:", activeSavings);
+    }
+  }, [activeSavings, activeSavingsLoading]);
+
+  useEffect(() => {
+    console.log("useTotalSaved output:", {
+      totalAmount,
+      totalRewards,
+      savingsCount,
+      isLoading,
+      error,
+    });
+  }, [totalAmount, totalRewards, savingsCount, isLoading, error]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-green-50 to-yellow-50">
@@ -49,11 +51,15 @@ export default function Dashboard() {
           <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0">
             <CardContent className="p-6 text-center space-y-2">
               <p className="text-purple-100 text-sm">Total Amount Saved</p>
-              <h2 className="text-4xl font-bold">$334.00</h2>
+              <h2 className="text-4xl font-bold">
+                {isLoading ? "Loading..." : error ? "Error" : `$${parseFloat(totalAmount).toFixed(2)}`}
+              </h2>
               <div className="flex items-center justify-center space-x-4 text-sm">
                 <div className="flex items-center space-x-1">
                   <Coins className="w-4 h-4" />
-                  <span>16.7 $BTS earned</span>
+                  <span>
+                    {isLoading ? "Loading..." : error ? "Error" : `${parseFloat(totalRewards).toFixed(1)} $BTS earned`}
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -81,7 +87,9 @@ export default function Dashboard() {
           {/* Active Vaults Preview */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Active Vaults</h3>
+              <h3 className="font-semibold text-gray-900">
+                Active Vaults {!isLoading && !error && savingsCount > 0 && `(${savingsCount})`}
+              </h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -92,6 +100,113 @@ export default function Dashboard() {
               </Button>
             </div>
 
+            {isLoading ? (
+              <Card className="border-gray-200">
+                <CardContent className="p-4 text-center">
+                  <p className="text-gray-500">Loading your vaults...</p>
+                </CardContent>
+              </Card>
+            ) : error ? (
+              <Card className="border-red-200 bg-red-50">
+                <CardContent className="p-4 text-center">
+                  <p className="text-red-600">Error loading vaults: {error}</p>
+                </CardContent>
+              </Card>
+            ) : savingsCount === 0 ? (
+              <Card className="border-gray-200">
+                <CardContent className="p-4 text-center space-y-2">
+                  <p className="text-gray-500">No vaults created yet</p>
+                  <Button
+                    size="sm"
+                    onClick={() => router.push("/create-vault")}
+                    className="bg-green-500 hover:bg-green-600 text-white"
+                  >
+                    Create Your First Vault
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              // Show real active savings data
+              <div className="space-y-3">
+                {activeSavings.slice(0, 3).map((saving) => { // Show max 3 savings on dashboard
+                  const timeLeft = saving.timeToMaturity;
+                  const daysLeft = Math.max(0, Math.floor(timeLeft / (24 * 3600)));
+                  const hoursLeft = Math.max(0, Math.floor((timeLeft % (24 * 3600)) / 3600));
+                  
+                  return (
+                    <Card key={saving.name} className="border-gray-200">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium text-gray-900">{saving.name}</h4>
+                          <Badge 
+                            variant="secondary" 
+                            className={
+                              saving.isMatured 
+                                ? "bg-blue-100 text-blue-700" 
+                                : "bg-green-100 text-green-700"
+                            }
+                          >
+                            {saving.isMatured ? "Ready" : "Active"}
+                          </Badge>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Progress (Time)</span>
+                            <span className="font-medium">
+                              {saving.progressPercentage.toFixed(1)}%
+                            </span>
+                          </div>
+                          <Progress value={saving.progressPercentage} className="h-2" />
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>Saved: ${parseFloat(saving.amountFormatted).toFixed(2)}</span>
+                            <span>
+                              {timeLeft > 0 
+                                ? `${daysLeft}d ${hoursLeft}h left`
+                                : "Matured"
+                              }
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center space-x-1 text-sm text-green-600">
+                            <Coins className="w-4 h-4" />
+                            <span>+{parseFloat(saving.interestFormatted).toFixed(3)} $BTS</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs bg-transparent"
+                            onClick={() => router.push(`/top-up?vault=${encodeURIComponent(saving.name)}`)}
+                          >
+                            Top Up
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+                
+                {activeSavings.length > 3 && (
+                  <Card className="border-purple-200 bg-purple-50">
+                    <CardContent className="p-3 text-center">
+                      <p className="text-sm text-purple-700">
+                        +{activeSavings.length - 3} more vault{activeSavings.length - 3 !== 1 ? 's' : ''}
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => router.push("/my-vaults")}
+                        className="text-purple-600 p-0 h-auto font-normal"
+                      >
+                        View All
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {/* Keep the old mock vaults for now, but commented out
             {mockVaults.map((vault) => (
               <Card key={vault.id} className="border-gray-200">
                 <CardContent className="p-4 space-y-3">
@@ -126,7 +241,7 @@ export default function Dashboard() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            ))} */}
           </div>
 
           {/* Wallet Watch */}
