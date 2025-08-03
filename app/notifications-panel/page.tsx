@@ -10,6 +10,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Progress } from "../../components/ui/progress";
 import { ArrowLeft, Bell, TrendingUp, Coins, Users, Target, PiggyBank, Plus } from "lucide-react";
+import { sanitizeDecimalInput, createNumericInputHandler, createNumericKeyDownHandler } from "../../lib/inputValidation";
 
 interface Notification {
   id: number;
@@ -255,9 +256,14 @@ export default function NotificationsPanel() {
                   </span>
                   <Input
                     id="amount"
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     value={saveAmount}
-                    onChange={(e) => setSaveAmount(e.target.value)}
+                    onChange={createNumericInputHandler(
+                      setSaveAmount,
+                      (value) => sanitizeDecimalInput(value, 2, false)
+                    )}
+                    onKeyDown={createNumericKeyDownHandler(true, false)}
                     className="pl-8"
                     placeholder="0.00"
                   />

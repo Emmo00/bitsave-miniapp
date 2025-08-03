@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAccount, useConnect, useChainId, useSwitchChain } from "wagmi";
 import { Button } from "../../components/ui/button";
@@ -41,11 +41,19 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { createSavingsVault } from "../../onchain/writes";
+import { getTokenBalance } from "../../onchain/reads";
 import CONTRACT_ADDRESSES, { Stablecoin } from "../../constants/addresses";
 import { getSupportedTokens } from "../../lib/tokenUtils";
 import { useToast } from "../../hooks/useToast";
 import Image from "next/image";
 import { config } from "../../components/providers/WagmiProvider";
+import {
+  sanitizeDecimalInput,
+  sanitizePercentageInput,
+  createNumericInputHandler,
+  createNumericKeyDownHandler,
+} from "../../lib/inputValidation";
+import { formatUnits, parseUnits } from "viem";
 
 export default function VaultCreation() {
   const router = useRouter();
@@ -60,6 +68,8 @@ export default function VaultCreation() {
   const [isCreating, setIsCreating] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [transactionHash, setTransactionHash] = useState<string>("");
+  const [tokenBalance, setTokenBalance] = useState<string>("0");
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [vaultData, setVaultData] = useState({
     name: "",
     token: "",
@@ -71,6 +81,44 @@ export default function VaultCreation() {
 
   const totalSteps = 3;
   const progress = (step / totalSteps) * 100;
+
+  // Fetch token balance when token or address changes
+  const fetchTokenBalance = async () => {
+    if (!address || !vaultData.token || !isConnected) {
+      setTokenBalance("0");
+      return;
+    }
+
+    const selectedToken = getSelectedToken();
+    if (!selectedToken) {
+      setTokenBalance("0");
+      return;
+    }
+
+    setIsLoadingBalance(true);
+    try {
+      const balance = await getTokenBalance(
+        address,
+        selectedToken.address as string,
+        vaultData.network
+      );
+      const formattedBalance = formatUnits(
+        balance,
+        selectedToken.decimals || 18
+      );
+      setTokenBalance(formattedBalance);
+    } catch (error) {
+      console.error("Error fetching token balance:", error);
+      setTokenBalance("0");
+    } finally {
+      setIsLoadingBalance(false);
+    }
+  };
+
+  // Effect to fetch balance when dependencies change
+  useEffect(() => {
+    fetchTokenBalance();
+  }, [address, vaultData.token, vaultData.network, isConnected]);
 
   // Get supported tokens for selected network
   const getTokensForNetwork = (networkId: number) => {
@@ -160,6 +208,16 @@ export default function VaultCreation() {
         toast.error("Invalid Amount", "Initial amount cannot be negative");
         return;
       }
+      if (
+        vaultData.initialAmount &&
+        parseFloat(vaultData.initialAmount) > parseFloat(tokenBalance)
+      ) {
+        toast.error(
+          "Insufficient Balance",
+          `You only have ${parseFloat(tokenBalance).toFixed(2)} tokens available`
+        );
+        return;
+      }
     }
 
     // Validate step 2 (Settings)
@@ -218,6 +276,18 @@ export default function VaultCreation() {
       return;
     }
 
+    // Validate balance if initial amount is provided
+    if (
+      vaultData.initialAmount &&
+      parseFloat(vaultData.initialAmount) > parseFloat(tokenBalance)
+    ) {
+      toast.error(
+        "Insufficient Balance",
+        `You only have ${parseFloat(tokenBalance).toFixed(2)} tokens available`
+      );
+      return;
+    }
+
     setIsCreating(true);
 
     try {
@@ -237,8 +307,7 @@ export default function VaultCreation() {
 
       // Create the vault using smart contract
       const durationInDays = vaultData.duration[0] * 30; // Convert months to days (approximate)
-      const result = await createSavingsVault(2, {
-        // $2 saving fee
+      const result = await createSavingsVault({
         name: vaultData.name,
         network: vaultData.network,
         token: selectedToken,
@@ -293,10 +362,10 @@ export default function VaultCreation() {
 
   const viewTransaction = () => {
     try {
-      const explorerUrl =
-        vaultData.network === 8453
-          ? `https://basescan.org/tx/${transactionHash}`
-          : `https://celoscan.io/tx/${transactionHash}`;
+      const explorerUrl = `${
+        config.chains.find((chain) => chain.id === config.state.chainId)
+          ?.blockExplorers.default.url
+      }/tx/${transactionHash}`;
       window.open(explorerUrl, "_blank");
     } catch (error) {
       const { title, message } = getErrorMessage(error);
@@ -437,32 +506,67 @@ export default function VaultCreation() {
                     ))}
                   </SelectContent>
                 </Select>
+                {vaultData.token && isConnected && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Available Balance:</span>
+                    <span className="font-medium text-green-600">
+                      {isLoadingBalance ? (
+                        <div className="flex items-center space-x-1">
+                          <Loader className="w-3 h-3 animate-spin" />
+                          <span>Loading...</span>
+                        </div>
+                      ) : (
+                        `${parseFloat(tokenBalance).toFixed(2)} ${getSelectedToken()?.name || "tokens"}`
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="initial">Initial Amount (Optional)</Label>
-                <Input
-                  id="initial"
-                  type="number"
-                  inputMode="decimal"
-                  pattern="[0-9]*[.,]?[0-9]*"
-                  placeholder="0.00"
-                  value={vaultData.initialAmount}
-                  onChange={(e) => {
-                    // Only allow numbers and at most one decimal point
-                    const value = e.target.value.replace(/[^0-9.]/g, "");
-                    // Prevent multiple decimals
-                    const sanitized =
-                      value.split(".").length > 2
-                        ? value.split(".").slice(0, 2).join(".")
-                        : value;
-                    setVaultData({
-                      ...vaultData,
-                      initialAmount: sanitized,
-                    });
-                  }}
-                  className="rounded-xl"
-                />
+                <div className="relative">
+                  <Input
+                    id="initial"
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.,]?[0-9]*"
+                    placeholder="0.00"
+                    value={vaultData.initialAmount}
+                    onChange={createNumericInputHandler(
+                      (value) =>
+                        setVaultData({ ...vaultData, initialAmount: value }),
+                      (value) => sanitizeDecimalInput(value, 2, false)
+                    )}
+                    onKeyDown={createNumericKeyDownHandler(true, false)}
+                    className="rounded-xl pr-16"
+                  />
+                  {vaultData.token && parseFloat(tokenBalance) > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const maxAmount = parseFloat(tokenBalance).toFixed(2);
+                        setVaultData({
+                          ...vaultData,
+                          initialAmount: maxAmount,
+                        });
+                      }}
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 px-2 text-xs text-purple-600 hover:bg-purple-50"
+                    >
+                      Max
+                    </Button>
+                  )}
+                </div>
+                {vaultData.initialAmount &&
+                  parseFloat(vaultData.initialAmount) >
+                    parseFloat(tokenBalance) && (
+                    <p className="text-xs text-red-500">
+                      Insufficient balance. You only have{" "}
+                      {parseFloat(tokenBalance).toFixed(2)} tokens available.
+                    </p>
+                  )}
               </div>
             </div>
           </div>
@@ -494,11 +598,15 @@ export default function VaultCreation() {
                 <Label htmlFor="penalty">Early Withdrawal Penalty (%)</Label>
                 <Input
                   id="penalty"
+                  type="text"
+                  inputMode="decimal"
                   placeholder="5"
                   value={vaultData.penalty}
-                  onChange={(e) =>
-                    setVaultData({ ...vaultData, penalty: e.target.value })
-                  }
+                  onChange={createNumericInputHandler(
+                    (value) => setVaultData({ ...vaultData, penalty: value }),
+                    (value) => sanitizePercentageInput(value, 1)
+                  )}
+                  onKeyDown={createNumericKeyDownHandler(true, false)}
                   className="rounded-xl"
                 />
                 <p className="text-xs text-gray-500">
@@ -725,7 +833,7 @@ export default function VaultCreation() {
 
         {/* Success Modal */}
         <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-          <DialogContent className="max-w-md mx-4">
+          <DialogContent className="max-w-md mx-4 text-black">
             <DialogHeader>
               <DialogTitle className="flex items-center space-x-2 text-center">
                 <CheckCircle className="w-6 h-6 text-green-500" />
@@ -743,7 +851,11 @@ export default function VaultCreation() {
                     </h3>
                     <p className="text-sm text-green-600">
                       Saving for {vaultData.duration[0]} months on{" "}
-                      {vaultData.network === 8453 ? "Base" : "Celo"}
+                      {
+                        config.chains.find(
+                          (chain) => chain.id === config.state.chainId
+                        )?.name
+                      }
                     </p>
                   </div>
                 </CardContent>

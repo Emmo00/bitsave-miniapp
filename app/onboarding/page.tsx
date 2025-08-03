@@ -52,6 +52,12 @@ import { useToast } from "../../hooks/useToast";
 import { WriteContractErrorType } from "@wagmi/core";
 import CONTRACT_ADDRESSES, { Stablecoin } from "../../constants/addresses";
 import { JOINING_FEE, SAVING_FEE } from "../../lib/constants";
+import {
+  sanitizeDecimalInput,
+  sanitizePercentageInput,
+  createNumericInputHandler,
+  createNumericKeyDownHandler,
+} from "../../lib/inputValidation";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -696,7 +702,9 @@ export default function OnboardingPage() {
                 <h4 className="font-medium text-orange-800">
                   Total Setup Cost
                 </h4>
-                <div className="text-2xl font-bold text-green-600">$2.00</div>
+                <div className="text-2xl font-bold text-green-600">
+                  ${JOINING_FEE + SAVING_FEE}.00
+                </div>
                 <p className="text-sm text-orange-700">
                   One-time setup fee to get started
                 </p>
@@ -862,11 +870,15 @@ export default function OnboardingPage() {
                   </span>
                   <Input
                     id="initial-amount"
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     value={vaultConfig.amount}
-                    onChange={(e) =>
-                      setVaultConfig({ ...vaultConfig, amount: e.target.value })
-                    }
+                    onChange={createNumericInputHandler(
+                      (value) =>
+                        setVaultConfig({ ...vaultConfig, amount: value }),
+                      (value) => sanitizeDecimalInput(value, 2, false)
+                    )}
+                    onKeyDown={createNumericKeyDownHandler(true, false)}
                     className="pl-8 rounded-xl"
                     placeholder="0.00"
                   />
@@ -928,14 +940,15 @@ export default function OnboardingPage() {
                 <div className="relative">
                   <Input
                     id="penalty"
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     value={vaultConfig.penalty}
-                    onChange={(e) =>
-                      setVaultConfig({
-                        ...vaultConfig,
-                        penalty: e.target.value,
-                      })
-                    }
+                    onChange={createNumericInputHandler(
+                      (value) =>
+                        setVaultConfig({ ...vaultConfig, penalty: value }),
+                      (value) => sanitizePercentageInput(value, 1)
+                    )}
+                    onKeyDown={createNumericKeyDownHandler(true, false)}
                     className="pr-8 rounded-xl"
                     placeholder="0"
                   />

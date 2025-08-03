@@ -1,4 +1,8 @@
-import { writeContract, simulateContract, sendCalls } from "@wagmi/core";
+import {
+  writeContract,
+  simulateContract,
+  waitForTransactionReceipt,
+} from "@wagmi/core";
 import BITSAVE_ABI from "../abi/BitSave.json";
 import CHILD_CONTRACT_ABI from "../abi/ChildContract.json";
 import STABLECOIN_ABI from "../abi/ERC20.json";
@@ -78,12 +82,15 @@ export async function createSavingsVault({
     });
 
     const approveResult = await writeContract(config, approveRequest.request);
+    // wait for transaction receipt
     console.log("Approve transaction result:", approveResult);
+    await waitForTransactionReceipt(config, { hash: approveResult });
+    console.log("transaction receipt: ", approveResult);
   }
 
   // Create savings vault
   const createRequest = await simulateContract(config, {
-    abi: [...BITSAVE_ABI, ...CHILD_CONTRACT_ABI],
+    abi: [...BITSAVE_ABI, ...CHILD_CONTRACT_ABI, ...STABLECOIN_ABI],
     address: contractAddress as Address,
     functionName: "createSaving",
     value: parseEther(
@@ -103,9 +110,10 @@ export async function createSavingsVault({
   const createResult = await writeContract(config, createRequest.request);
   console.log("Create savings vault transaction result:", createResult);
 
-  const id = createResult;
+  // wait for transaction receipt
+  await waitForTransactionReceipt(config, { hash: createResult });
 
-  console.log("Transaction ID:", id);
+  console.log("create savings confirmed");
 
   return createResult; // Return the transaction hash
 }

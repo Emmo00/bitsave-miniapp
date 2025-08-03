@@ -9,6 +9,7 @@ import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
 import { Progress } from "../../components/ui/progress";
 import { ArrowLeft, PiggyBank, Coins, CheckCircle } from "lucide-react";
+import { sanitizeDecimalInput, createNumericInputHandler, createNumericKeyDownHandler } from "../../lib/inputValidation";
 
 export default function TopUpVault() {
   const router = useRouter();
@@ -247,10 +248,15 @@ export default function TopUpVault() {
                 </span>
                 <Input
                   id="amount"
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   placeholder="0.00"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={createNumericInputHandler(
+                    setAmount,
+                    (value) => sanitizeDecimalInput(value, 2, false)
+                  )}
+                  onKeyDown={createNumericKeyDownHandler(true, false)}
                   className="pl-8 text-lg h-12 rounded-xl"
                 />
               </div>
