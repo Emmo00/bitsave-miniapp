@@ -43,7 +43,8 @@ export async function getUserChildContractFromAnyChain(userAccount: string) {
         continue; // No child contract found, try next chain
       }
       console.log(`Found child contract on ${chain.name}:`, childContract);
-      if (childContract) return { childContract, chainId: chain.id };
+
+      return { childContract, chainId: chain.id };
     } catch (error) {
       console.error(
         `Error fetching user child contract on ${chain.name}:`,

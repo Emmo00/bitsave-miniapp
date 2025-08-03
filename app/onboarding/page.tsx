@@ -51,6 +51,7 @@ import { createSavingsVault, joinBitSave } from "../../onchain/writes";
 import { useToast } from "../../hooks/useToast";
 import { WriteContractErrorType } from "@wagmi/core";
 import CONTRACT_ADDRESSES, { Stablecoin } from "../../constants/addresses";
+import { JOINING_FEE, SAVING_FEE } from "../../lib/constants";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -208,8 +209,6 @@ export default function OnboardingPage() {
     },
   ];
 
-  const joiningFee = 1; // Set the joining fee for Bitsave membership (Dollars)
-  const savingFee = 1; // Set the saving fee for creating a vault (Dollars)
   const totalSteps = steps.length;
 
   const isStepCompleted = (stepId: number) => completedSteps.includes(stepId);
@@ -253,7 +252,7 @@ export default function OnboardingPage() {
 
       // make transaction to join Bitsave
       try {
-        const transactionHash = await joinBitSave(joiningFee);
+        const transactionHash = await joinBitSave();
         console.log("Transaction successful:", transactionHash);
         toast.success("Transaction Successfull", "Successfully joined BitSave");
         setCompletedSteps((prev) => [...prev, 3]);
@@ -284,7 +283,7 @@ export default function OnboardingPage() {
 
     // make transaction to create savings vault
     try {
-      const transactionHash = await createSavingsVault(savingFee, vaultConfig);
+      const transactionHash = await createSavingsVault(vaultConfig);
       console.log("Transaction successful:", transactionHash);
       toast.success(
         "Transaction Successfull",
@@ -504,7 +503,7 @@ export default function OnboardingPage() {
               ) : (
                 <div className="flex items-center space-x-2">
                   <Wallet className="w-4 h-4" />
-                  <span>Join for ${joiningFee}.00</span>
+                  <span>Join for ${JOINING_FEE}.00</span>
                 </div>
               )}
             </Button>
@@ -599,7 +598,7 @@ export default function OnboardingPage() {
               ) : (
                 <div className="flex items-center space-x-2">
                   <PiggyBank className="w-4 h-4" />
-                  <span>Create Vault for ${savingFee}.00</span>
+                  <span>Create Vault for ${SAVING_FEE}.00</span>
                 </div>
               )}
             </Button>

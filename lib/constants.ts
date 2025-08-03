@@ -138,3 +138,6 @@ export const SIGNED_KEY_REQUEST_TYPE = [
   { name: "key", type: "bytes" },
   { name: "deadline", type: "uint256" },
 ];
+
+export const SAVING_FEE = 1; // dollars
+export const JOINING_FEE = 1; // dollars

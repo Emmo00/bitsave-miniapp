@@ -6,10 +6,11 @@ import CONTRACT_ADDRESSES, { Stablecoin } from "../constants/addresses";
 import { config } from "../components/providers/WagmiProvider";
 import { getJoinFeeInNativeTokenBasedOnChain } from "../onchain/actions";
 import { Address, parseEther, parseUnits } from "viem";
+import { JOINING_FEE, SAVING_FEE } from "../lib/constants";
 
 type SupportedChains = keyof typeof CONTRACT_ADDRESSES;
 
-export async function joinBitSave(joinFeeInDollars: number) {
+export async function joinBitSave() {
   const chainId = config.state.chainId;
   const chainName = (config.chains
     .find((chain) => chain.id === chainId)
@@ -24,7 +25,7 @@ export async function joinBitSave(joinFeeInDollars: number) {
     address: contractAddress as Address,
     functionName: "joinBitsave",
     value: parseEther(
-      await getJoinFeeInNativeTokenBasedOnChain(chainId, joinFeeInDollars)
+      await getJoinFeeInNativeTokenBasedOnChain(chainId, JOINING_FEE)
     ),
     connector: config.connectors[0],
   });
@@ -38,24 +39,21 @@ export async function joinBitSave(joinFeeInDollars: number) {
   return writeResult;
 }
 
-export async function createSavingsVault(
-  savingFeeInDollars: number,
-  {
-    name,
-    network,
-    token,
-    amount,
-    penalty,
-    duration,
-  }: {
-    name: string;
-    network: number;
-    token: Stablecoin;
-    amount: string;
-    penalty: string;
-    duration: number[];
-  }
-) {
+export async function createSavingsVault({
+  name,
+  network,
+  token,
+  amount,
+  penalty,
+  duration,
+}: {
+  name: string;
+  network: number;
+  token: Stablecoin;
+  amount: string;
+  penalty: string;
+  duration: number[];
+}) {
   const maturityTime =
     Math.floor(Date.now() / 1000 + duration[0] * 24 * 60 * 60) + 15 * 60; // Current time in seconds + duration in seconds + 15 minutes buffer
 
@@ -69,6 +67,7 @@ export async function createSavingsVault(
   config.connectors[0].getChainId = async () => chainId; // Ensure the connector uses the correct chain ID
 
   // Approve token transfer only if amount > 0
+  console.log("amount", parseFloat(amount));
   if (parseFloat(amount) > 0) {
     const approveRequest = await simulateContract(config, {
       abi: STABLECOIN_ABI,
@@ -88,7 +87,7 @@ export async function createSavingsVault(
     address: contractAddress as Address,
     functionName: "createSaving",
     value: parseEther(
-      await getJoinFeeInNativeTokenBasedOnChain(chainId, savingFeeInDollars)
+      await getJoinFeeInNativeTokenBasedOnChain(chainId, SAVING_FEE)
     ),
     args: [
       name, // Vault name
@@ -107,4 +106,6 @@ export async function createSavingsVault(
   const id = createResult;
 
   console.log("Transaction ID:", id);
+
+  return createResult; // Return the transaction hash
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { useAccount, useConnect, useChainId, useSwitchChain } from "wagmi";
 import { Button } from "../../components/ui/button";
 import {
   Card,
@@ -51,6 +51,7 @@ export default function VaultCreation() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const toast = useToast();
@@ -196,6 +197,7 @@ export default function VaultCreation() {
   const handleCreate = async () => {
     if (!isConnected || !address) {
       toast.error("Wallet Not Connected", "Please connect your wallet first");
+      connect({ connector: connectors[0] });
       return;
     }
 
@@ -309,7 +311,7 @@ export default function VaultCreation() {
     const baseRate = 0.04; // 4%
     const durationBonus = Math.min(0.02, (durationMonths - 1) * 0.001); // Up to 2% bonus for longer terms
     const totalRate = baseRate + durationBonus;
-    
+
     // Ensure we return a valid number
     return isNaN(totalRate) ? 0.04 : totalRate;
   };
@@ -319,7 +321,7 @@ export default function VaultCreation() {
     // Safely parse initial amount, default to 0 if invalid
     const initialAmountString = vaultData.initialAmount?.trim() || "0";
     const initialAmount = parseFloat(initialAmountString) || 0;
-    
+
     const durationMonths = vaultData.duration[0] || 1; // Default to 1 month if invalid
     const annualRate = calculateInterestRate();
 
@@ -329,7 +331,7 @@ export default function VaultCreation() {
       initialAmount,
       durationMonths,
       annualRate,
-      vaultData: vaultData
+      vaultData: vaultData,
     });
 
     // Calculate interest for the duration
@@ -346,7 +348,7 @@ export default function VaultCreation() {
 
     // Ensure we always return a valid number, minimum 0.1 BTS
     const finalRewards = Math.max(0.1, totalBtsRewards);
-    
+
     // Check if the result is NaN and provide fallback
     if (isNaN(finalRewards)) {
       console.error("calculateEstimatedRewards returned NaN, using fallback");
@@ -441,14 +443,24 @@ export default function VaultCreation() {
                 <Label htmlFor="initial">Initial Amount (Optional)</Label>
                 <Input
                   id="initial"
+                  type="number"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.,]?[0-9]*"
                   placeholder="0.00"
                   value={vaultData.initialAmount}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    // Only allow numbers and at most one decimal point
+                    const value = e.target.value.replace(/[^0-9.]/g, "");
+                    // Prevent multiple decimals
+                    const sanitized =
+                      value.split(".").length > 2
+                        ? value.split(".").slice(0, 2).join(".")
+                        : value;
                     setVaultData({
                       ...vaultData,
-                      initialAmount: e.target.value,
-                    })
-                  }
+                      initialAmount: sanitized,
+                    });
+                  }}
                   className="rounded-xl"
                 />
               </div>
@@ -516,7 +528,9 @@ export default function VaultCreation() {
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + vaultData.duration[0]);
         const selectedToken = getSelectedToken();
-        const networkName = config.chains.find(chain => chain.id === config.state.chainId)?.name;
+        const networkName = config.chains.find(
+          (chain) => chain.id === config.state.chainId
+        )?.name;
 
         return (
           <div className="space-y-6">
@@ -592,7 +606,8 @@ export default function VaultCreation() {
                   <div className="flex items-center space-x-2">
                     <Coins className="w-4 h-4 text-yellow-500" />
                     <span className="text-lg font-bold text-green-600">
-                      ~{(() => {
+                      ~
+                      {(() => {
                         try {
                           const rewards = calculateEstimatedRewards();
                           return rewards || "0.1";
@@ -600,12 +615,14 @@ export default function VaultCreation() {
                           console.error("Error calculating rewards:", error);
                           return "0.1";
                         }
-                      })()} $BTS
+                      })()}{" "}
+                      $BTS
                     </span>
                   </div>
                   <p className="text-xs text-gray-500">
                     Estimated based on{" "}
-                    {((calculateInterestRate() || 0.04) * 100).toFixed(1)}% annual rate
+                    {((calculateInterestRate() || 0.04) * 100).toFixed(1)}%
+                    annual rate
                   </p>
                 </div>
               </CardContent>
