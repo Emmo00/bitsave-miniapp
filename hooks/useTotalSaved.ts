@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import { useReadContract, useAccount } from "wagmi";
 import { Address, formatEther, zeroAddress } from "viem";
-import { getUserChildContractFromAnyChain, getUserVaultNames, getSaving } from "../onchain/reads";
+import {
+  getUserChildContractFromAnyChain,
+  getUserVaultNames,
+  getSaving,
+} from "../onchain/reads";
+import { formatTokenAmount } from "../lib/tokenUtils";
 import CHILDCONTRACT_ABI from "../abi/ChildContract.json";
 
 interface TotalSavedData {
   totalAmount: string; // Formatted as string for display
-  totalAmountWei: bigint; // Raw wei amount
+  totalAmountWei: number; // USD equivalent as number
   totalRewards: string; // Total interest accumulated
   totalRewardsWei: bigint; // Raw rewards in wei
   savingsCount: number;
@@ -21,7 +26,7 @@ export function useTotalSaved(): TotalSavedData {
     chainId: number;
   } | null>(null);
   const [savingsNames, setSavingsNames] = useState<string[]>([]);
-  const [totalAmount, setTotalAmount] = useState<bigint>(0n);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
   const [totalRewards, setTotalRewards] = useState<bigint>(0n);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +62,9 @@ export function useTotalSaved(): TotalSavedData {
           setChildContractInfo(null);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch child contract");
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch child contract"
+        );
         setChildContractInfo(null);
       } finally {
         setIsLoading(false);
@@ -70,7 +77,8 @@ export function useTotalSaved(): TotalSavedData {
   // Update savings names when data changes
   useEffect(() => {
     if (savingsNamesData) {
-      const names = (savingsNamesData as { savingsNames: string[] }).savingsNames;
+      const names = (savingsNamesData as { savingsNames: string[] })
+        .savingsNames;
       setSavingsNames(names);
     }
   }, [savingsNamesData]);
@@ -78,7 +86,7 @@ export function useTotalSaved(): TotalSavedData {
   // Effect to calculate total saved amount
   useEffect(() => {
     if (!childContractInfo?.address || !savingsNames.length) {
-      setTotalAmount(0n);
+      setTotalAmount(0);
       setTotalRewards(0n);
       return;
     }
@@ -87,28 +95,33 @@ export function useTotalSaved(): TotalSavedData {
       setIsLoading(true);
       setError(null);
       try {
-        let total = 0n;
+        let totalUsdValue = 0;
         let rewards = 0n;
 
         // Get all savings data
-        const savingsPromises = savingsNames.map(name => 
+        const savingsPromises = savingsNames.map((name) =>
           getSaving(childContractInfo.address, name)
         );
-        
+
         const savingsData = await Promise.all(savingsPromises);
 
         // Sum up amounts and rewards for valid savings
-        savingsData.forEach(saving => {
+        savingsData.forEach((saving) => {
           if (saving.isValid) {
-            total += saving.amount;
+            // Convert token amount to USD equivalent using proper decimals
+            const tokenAmountFormatted = formatTokenAmount(saving.amount, saving.tokenId);
+            const usdValue = parseFloat(tokenAmountFormatted);
+            totalUsdValue += usdValue;
             rewards += saving.interestAccumulated;
           }
         });
 
-        setTotalAmount(total);
+        setTotalAmount(totalUsdValue);
         setTotalRewards(rewards);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to calculate total saved");
+        setError(
+          err instanceof Error ? err.message : "Failed to calculate total saved"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -118,7 +131,7 @@ export function useTotalSaved(): TotalSavedData {
   }, [childContractInfo, savingsNames]);
 
   return {
-    totalAmount: formatEther(totalAmount),
+    totalAmount: totalAmount.toFixed(2),
     totalAmountWei: totalAmount,
     totalRewards: formatEther(totalRewards),
     totalRewardsWei: totalRewards,

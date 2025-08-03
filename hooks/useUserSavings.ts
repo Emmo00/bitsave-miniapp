@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { Address, formatEther } from "viem";
 import { getUserChildContractFromAnyChain, getAllUserSavings } from "../onchain/reads";
+import { formatTokenAmount } from "../lib/tokenUtils";
 
 export interface SavingDetails {
   name: string;
@@ -111,7 +112,7 @@ export function useUserSavings(): UserSavingsData {
           return {
             name: saving.name,
             amount: saving.amount,
-            amountFormatted: formatEther(saving.amount),
+            amountFormatted: formatTokenAmount(saving.amount, saving.tokenId),
             tokenId: saving.tokenId,
             interestAccumulated: saving.interestAccumulated,
             interestFormatted: formatEther(saving.interestAccumulated),

@@ -107,10 +107,8 @@ export default function OnboardingPage() {
   useEffect(() => {
     // switch chain when selectedChain changes
     const switchSelectedChain = async () => {
-      console.log("Switched to chain:", selectedChain);
       // switch chain in Farcaster SDK
       await switchChain(selectedChain.toString());
-      console.log(config.state.chainId);
     };
     switchSelectedChain();
   }, [selectedChain]);
@@ -118,7 +116,6 @@ export default function OnboardingPage() {
   useEffect(() => {
     // check and set membership flag
     sdk.actions.ready(); // Notify the SDK that the miniapp is ready
-    console.log("Bitsave miniapp is ready");
 
     // Check if user is already a member
     const checkMembership = async () => {
@@ -129,16 +126,14 @@ export default function OnboardingPage() {
           address.toLowerCase()
         );
         if (!result) {
-          console.log("User is not a member of Bitsave");
           setIsAMember(false);
           return;
         }
         const { childContract, chainId } = result;
         setIsAMember(!!childContract);
         await switchChain(chainId.toString()); // Switch to the chain of the child contract
-        console.log(`User is a member of Bitsave on chain ${chainId}`);
       } catch (error) {
-        console.error("Error checking membership:", error);
+        // Error checking membership
       }
     };
 
@@ -154,20 +149,17 @@ export default function OnboardingPage() {
         const result = await getUserChildContractFromAnyChain(
           address.toLowerCase()
         );
-        console.log("User child contract result [onboarding]:", result);
         if (!result) {
-          console.log("User has no child contract or is not a member");
           return;
         }
         const { childContract, chainId } = result;
         if (childContract) {
           const vaultNames = await getUserVaultNames(childContract);
           setIsVaultCreated(vaultNames.length > 0);
-          console.log("User vaults:", vaultNames);
           await switchChain(chainId.toString()); // Switch to the chain of the child contract
         }
       } catch (error) {
-        console.error("Error fetching user vaults:", error);
+        // Error fetching user vaults
       }
     };
     fetchUserVaults();
@@ -235,15 +227,12 @@ export default function OnboardingPage() {
       sdk.actions
         .addMiniApp()
         .then(() => {
-          console.log("Bitsave MiniApp added to Farcaster");
           setCompletedSteps((prev) => [...prev, 1]);
           setCurrentStep(stepId + 1);
           setIsProcessing(false);
         })
         .catch((error) => {
-          console.error("Error adding Bitsave MiniApp:", error);
           setCompletedSteps((prev) => [...prev, 1]); // debug
-          console.log("Skipping to next step due to error");
           setCurrentStep(stepId + 1);
           setIsProcessing(false);
         });
@@ -259,14 +248,12 @@ export default function OnboardingPage() {
       // make transaction to join Bitsave
       try {
         const transactionHash = await joinBitSave();
-        console.log("Transaction successful:", transactionHash);
         toast.success("Transaction Successfull", "Successfully joined BitSave");
         setCompletedSteps((prev) => [...prev, 3]);
         setCurrentStep(stepId + 1);
         setIsAMember(true);
         setIsProcessing(false);
       } catch (error) {
-        console.error("Error joining Bitsave:", error);
         toast.error(
           "Transaction Failed",
           (error as BaseError).shortMessage ||
@@ -290,7 +277,6 @@ export default function OnboardingPage() {
     // make transaction to create savings vault
     try {
       const transactionHash = await createSavingsVault(vaultConfig);
-      console.log("Transaction successful:", transactionHash);
       toast.success(
         "Transaction Successfull",
         "Successfully created Savings Vault"
@@ -299,7 +285,6 @@ export default function OnboardingPage() {
       setIsProcessing(false);
       router.push("/dashboard");
     } catch (error) {
-      console.error("Error creating Savings Vault:", error);
       toast.error(
         "Transaction Failed",
         (error as BaseError).shortMessage ||

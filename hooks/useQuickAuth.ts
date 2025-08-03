@@ -88,7 +88,6 @@ export function useQuickAuth(): UseQuickAuthReturn {
 
       return null;
     } catch (error) {
-      console.error("Token validation failed:", error);
       return null;
     }
   };
@@ -120,7 +119,6 @@ export function useQuickAuth(): UseQuickAuthReturn {
           setStatus("unauthenticated");
         }
       } catch (error) {
-        console.error("Error checking existing authentication:", error);
         setStatus("unauthenticated");
       }
     };
@@ -160,7 +158,6 @@ export function useQuickAuth(): UseQuickAuthReturn {
       setStatus("unauthenticated");
       return false;
     } catch (error) {
-      console.error("Sign-in process failed:", error);
       setStatus("unauthenticated");
       return false;
     }

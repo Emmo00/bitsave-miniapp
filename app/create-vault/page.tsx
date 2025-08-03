@@ -252,7 +252,6 @@ export default function VaultCreation() {
         duration: [durationInDays],
       });
 
-      console.log("Vault creation result:", result);
       if (result) {
         setTransactionHash(result as string);
       }
@@ -263,7 +262,6 @@ export default function VaultCreation() {
       );
       setShowSuccessModal(true);
     } catch (error) {
-      console.error("Error creating vault:", error);
       const { title, message } = getErrorMessage(error);
       toast.error(title, message);
     } finally {
@@ -330,15 +328,6 @@ export default function VaultCreation() {
     const durationMonths = vaultData.duration[0] || 1; // Default to 1 month if invalid
     const annualRate = calculateInterestRate();
 
-    // Debug logging
-    console.log("calculateEstimatedRewards debug:", {
-      initialAmountString,
-      initialAmount,
-      durationMonths,
-      annualRate,
-      vaultData: vaultData,
-    });
-
     // Calculate interest for the duration
     const monthlyRate = annualRate / 12;
     const totalInterest = initialAmount * monthlyRate * durationMonths;
@@ -356,7 +345,6 @@ export default function VaultCreation() {
 
     // Check if the result is NaN and provide fallback
     if (isNaN(finalRewards)) {
-      console.error("calculateEstimatedRewards returned NaN, using fallback");
       return "0.1"; // Fallback minimum
     }
 
@@ -614,7 +602,6 @@ export default function VaultCreation() {
                           const rewards = calculateEstimatedRewards();
                           return rewards || "0.1";
                         } catch (error) {
-                          console.error("Error calculating rewards:", error);
                           return "0.1";
                         }
                       })()}{" "}

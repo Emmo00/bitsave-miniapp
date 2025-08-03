@@ -17,22 +17,6 @@ export default function Dashboard() {
   const { totalAmount, totalRewards, savingsCount, isLoading, error } = useTotalSaved();
   const { activeSavings, isLoading: activeSavingsLoading } = useActiveSavings();
 
-  useEffect(() => {
-    if (!activeSavingsLoading) {
-      console.log("Active Savings:", activeSavings);
-    }
-  }, [activeSavings, activeSavingsLoading]);
-
-  useEffect(() => {
-    console.log("useTotalSaved output:", {
-      totalAmount,
-      totalRewards,
-      savingsCount,
-      isLoading,
-      error,
-    });
-  }, [totalAmount, totalRewards, savingsCount, isLoading, error]);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-green-50 to-yellow-50">
       <div className="max-w-md mx-auto bg-white min-h-screen shadow-xl">

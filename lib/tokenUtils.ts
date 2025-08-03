@@ -1,16 +1,18 @@
 import CONTRACT_ADDRESSES, { Stablecoin } from "../constants/addresses";
+import { formatUnits } from "viem";
 
 export interface TokenInfo {
   symbol: string;
   image: string | null;
   name: string;
+  decimals: number;
 }
 
 /**
- * Get token information (symbol, image, name) from token address
+ * Get token information (symbol, image, name, decimals) from token address
  * Only supports stablecoins defined in constants/addresses.ts
  * @param tokenId - The token contract address
- * @returns TokenInfo object with symbol, image, and name
+ * @returns TokenInfo object with symbol, image, name, and decimals
  */
 export function getTokenInfo(tokenId: string): TokenInfo {
   // Search through all networks for matching token address
@@ -29,7 +31,8 @@ export function getTokenInfo(tokenId: string): TokenInfo {
       return {
         symbol,
         image: stablecoin.image,
-        name: stablecoin.name
+        name: stablecoin.name,
+        decimals: stablecoin.decimals
       };
     }
   }
@@ -38,8 +41,20 @@ export function getTokenInfo(tokenId: string): TokenInfo {
   return { 
     symbol: "UNKNOWN", 
     image: null, 
-    name: "Unknown Token" 
+    name: "Unknown Token",
+    decimals: 18
   };
+}
+
+/**
+ * Format token amount using the correct decimals for the token
+ * @param amount - The amount in wei/base units
+ * @param tokenId - The token contract address
+ * @returns Formatted string with proper decimals
+ */
+export function formatTokenAmount(amount: bigint, tokenId: string): string {
+  const tokenInfo = getTokenInfo(tokenId);
+  return formatUnits(amount, tokenInfo.decimals);
 }
 
 /**

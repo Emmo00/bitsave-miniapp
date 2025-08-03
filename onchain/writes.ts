@@ -34,11 +34,7 @@ export async function joinBitSave() {
     connector: config.connectors[0],
   });
 
-  console.log("Simulated join BitSave transaction result:", result);
-
   const writeResult = await writeContract(config, request);
-
-  console.log("Join BitSave transaction result:", writeResult);
 
   return writeResult;
 }
@@ -71,7 +67,6 @@ export async function createSavingsVault({
   config.connectors[0].getChainId = async () => chainId; // Ensure the connector uses the correct chain ID
 
   // Approve token transfer only if amount > 0
-  console.log("amount", parseFloat(amount));
   if (parseFloat(amount) > 0) {
     const approveRequest = await simulateContract(config, {
       abi: STABLECOIN_ABI,
@@ -83,9 +78,7 @@ export async function createSavingsVault({
 
     const approveResult = await writeContract(config, approveRequest.request);
     // wait for transaction receipt
-    console.log("Approve transaction result:", approveResult);
     await waitForTransactionReceipt(config, { hash: approveResult });
-    console.log("transaction receipt: ", approveResult);
   }
 
   // Create savings vault
@@ -108,12 +101,9 @@ export async function createSavingsVault({
   });
 
   const createResult = await writeContract(config, createRequest.request);
-  console.log("Create savings vault transaction result:", createResult);
 
   // wait for transaction receipt
   await waitForTransactionReceipt(config, { hash: createResult });
-
-  console.log("create savings confirmed");
 
   return createResult; // Return the transaction hash
 }

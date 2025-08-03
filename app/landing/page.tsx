@@ -24,9 +24,7 @@ export default function LandingPage() {
     // connect wallet if not connected
     if (!isConnected) {
       connect({ connector: connectors[0] }); // Connect to Farcaster Wallet by default
-      console.log("Connecting to Farcaster Wallet...");
     }
-    console.log("Connected address:", address);
   }, []);
 
   useEffect(() => {
@@ -36,10 +34,8 @@ export default function LandingPage() {
 
       try {
         const result = await getUserChildContractFromAnyChain(address.toLowerCase());
-        console.log("User child contract result [landing]:", result);
         if (result && result.childContract) {
           const vaultNames = await getUserVaultNames(result.childContract);
-          console.log("User vault names:", vaultNames);
           setIsVaultCreated(vaultNames.length > 0);
           // switch chain
           await switchChain(result.chainId.toString());
@@ -47,7 +43,7 @@ export default function LandingPage() {
 
         setIsCheckingMembership(false);
       } catch (error) {
-        console.error("Error fetching user vaults:", error);
+        // Error fetching user vaults
       }
     };
     fetchUserVaults();
@@ -63,7 +59,6 @@ export default function LandingPage() {
 
   useEffect(() => {
     sdk.actions.ready(); // Notify the SDK that the miniapp is ready
-    console.log("Bitsave miniapp is ready");
   }, []);
 
   return (
