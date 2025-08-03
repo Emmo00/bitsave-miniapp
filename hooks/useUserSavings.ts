@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import { Address, formatEther } from "viem";
+import { Address, formatEther, formatUnits } from "viem";
 import { getUserChildContractFromAnyChain, getAllUserSavings } from "../onchain/reads";
+import CONTRACT_ADDRESSES from "../constants/addresses";
 
 export interface SavingDetails {
   name: string;
@@ -29,6 +30,21 @@ interface UserSavingsData {
   totalCompletedSavings: number;
   isLoading: boolean;
   error: string | null;
+}
+
+// Helper function to get token decimals from token address
+function getTokenDecimals(tokenAddress: string): number {
+  // Search through all networks and stablecoins to find the token
+  for (const network of Object.values(CONTRACT_ADDRESSES)) {
+    const token = network.STABLECOINS.find(
+      (stablecoin) => stablecoin.address?.toLowerCase() === tokenAddress.toLowerCase()
+    );
+    if (token) {
+      return token.decimals;
+    }
+  }
+  // Default to 18 decimals if token not found (most ERC20 tokens use 18)
+  return 18;
 }
 
 export function useUserSavings(): UserSavingsData {
@@ -94,6 +110,9 @@ export function useUserSavings(): UserSavingsData {
           const startTimeSeconds = Number(saving.startTime);
           const currentTime = Math.floor(Date.now() / 1000);
           
+          // Get token decimals for proper formatting
+          const tokenDecimals = getTokenDecimals(saving.tokenId);
+          
           // Active = isValid true (not withdrawn)
           // Completed = isValid false (withdrawn)
           const isActive = saving.isValid;
@@ -111,10 +130,10 @@ export function useUserSavings(): UserSavingsData {
           return {
             name: saving.name,
             amount: saving.amount,
-            amountFormatted: formatEther(saving.amount),
+            amountFormatted: formatUnits(saving.amount, tokenDecimals),
             tokenId: saving.tokenId,
             interestAccumulated: saving.interestAccumulated,
-            interestFormatted: formatEther(saving.interestAccumulated),
+            interestFormatted: formatEther(saving.interestAccumulated), // Interest is in native token (ETH/MATIC etc)
             startTime: saving.startTime,
             penaltyPercentage: saving.penaltyPercentage,
             maturityTime: saving.maturityTime,
