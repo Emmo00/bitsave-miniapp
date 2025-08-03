@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
-import { Progress } from "../../components/ui/progress";
 import { PiggyBank, Coins, Plus, Bell, ArrowRight, Waves, Handshake } from "lucide-react";
 import { BottomNav } from "../../components/bottom-nav";
 import { NotificationBell } from "../../components/notification-bell";
@@ -151,14 +150,10 @@ export default function Dashboard() {
                         </div>
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Progress (Time)</span>
-                            <span className="font-medium">
-                              {saving.progressPercentage.toFixed(1)}%
-                            </span>
+                            <span className="text-gray-600">Saved Amount</span>
+                            <span className="font-medium">${parseFloat(saving.amountFormatted).toFixed(2)}</span>
                           </div>
-                          <Progress value={saving.progressPercentage} className="h-2" />
                           <div className="flex justify-between text-xs text-gray-500">
-                            <span>Saved: ${parseFloat(saving.amountFormatted).toFixed(2)}</span>
                             <span>
                               {timeLeft > 0 
                                 ? `${daysLeft}d ${hoursLeft}h left`

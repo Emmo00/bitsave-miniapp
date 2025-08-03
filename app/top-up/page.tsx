@@ -7,7 +7,6 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
-import { Progress } from "../../components/ui/progress";
 import { ArrowLeft, PiggyBank, Coins, CheckCircle } from "lucide-react";
 import { sanitizeDecimalInput, createNumericInputHandler, createNumericKeyDownHandler } from "../../lib/inputValidation";
 
@@ -44,7 +43,6 @@ export default function TopUpVault() {
   };
 
   const newTotal = vault.saved + Number.parseFloat(amount || "0");
-  const newProgress = (newTotal / vault.target) * 100;
 
   if (step === 3) {
     return (
@@ -73,16 +71,12 @@ export default function TopUpVault() {
                     <span className="text-gray-600">New Total:</span>
                     <span className="font-bold text-green-600">${newTotal}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Progress:</span>
-                    <span className="font-medium">{newProgress.toFixed(1)}%</span>
-                  </div>
                 </CardContent>
               </Card>
 
               <Card className="border-purple-200 bg-purple-50/50">
                 <CardContent className="p-4 text-center space-y-2">
-                  <h4 className="font-medium text-purple-800">Share Your Progress</h4>
+                  <h4 className="font-medium text-purple-800">Share Your Achievement</h4>
                   <p className="text-sm text-purple-700">
                     "Just topped up my {vault.name} vault with ${amount}! 💪 #Bitsave"
                   </p>
@@ -161,20 +155,16 @@ export default function TopUpVault() {
               </CardContent>
             </Card>
 
-            {/* New Progress */}
+            {/* Updated Balance */}
             <Card>
               <CardContent className="p-4 space-y-3">
-                <h4 className="font-medium text-gray-900">Updated Progress</h4>
+                <h4 className="font-medium text-gray-900">Updated Balance</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Progress</span>
+                    <span className="text-gray-600">New Total</span>
                     <span className="font-medium">
-                      ${newTotal} / ${vault.target}
+                      ${newTotal}
                     </span>
-                  </div>
-                  <Progress value={newProgress} className="h-3" />
-                  <div className="text-center text-sm text-gray-600">
-                    {newProgress.toFixed(1)}% complete
                   </div>
                 </div>
               </CardContent>
@@ -225,10 +215,9 @@ export default function TopUpVault() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Current Balance</span>
                   <span className="font-medium">
-                    ${vault.saved} / ${vault.target}
+                    ${vault.saved}
                   </span>
                 </div>
-                <Progress value={vault.progress} className="h-2" />
               </div>
 
               <div className="flex items-center space-x-1 text-sm">
@@ -288,11 +277,6 @@ export default function TopUpVault() {
                     <span className="text-gray-600">New Balance:</span>
                     <span className="font-bold">${newTotal}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">New Progress:</span>
-                    <span className="font-medium">{newProgress.toFixed(1)}%</span>
-                  </div>
-                  <Progress value={newProgress} className="h-2" />
                 </div>
               </CardContent>
             </Card>

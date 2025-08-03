@@ -127,6 +127,6 @@ export async function getTokenBalance(
     address: tokenAddress as Address,
     functionName: "balanceOf",
     args: [userAccount as Address],
-    chainId: chainId,
+    chainId: chainId as 8453 | 42220 | 84532 | 44787,
   })) as bigint;
 }

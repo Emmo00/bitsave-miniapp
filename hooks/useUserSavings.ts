@@ -19,7 +19,6 @@ export interface SavingDetails {
   isActive: boolean; // true if isValid = true (not withdrawn)
   isMatured: boolean; // true if current time >= maturityTime
   timeToMaturity: number; // in seconds, negative if already matured
-  progressPercentage: number; // progress based on time elapsed
 }
 
 interface UserSavingsData {
@@ -119,13 +118,6 @@ export function useUserSavings(): UserSavingsData {
           const isCompleted = !saving.isValid;
           const isMatured = currentTime >= maturityTimeSeconds;
           const timeToMaturity = maturityTimeSeconds - currentTime;
-          
-          // Calculate progress percentage based on time elapsed
-          const totalDuration = maturityTimeSeconds - startTimeSeconds;
-          const timeElapsed = currentTime - startTimeSeconds;
-          const progressPercentage = totalDuration > 0 
-            ? Math.min(100, Math.max(0, (timeElapsed / totalDuration) * 100))
-            : 100;
 
           return {
             name: saving.name,
@@ -142,7 +134,6 @@ export function useUserSavings(): UserSavingsData {
             isActive,
             isMatured,
             timeToMaturity,
-            progressPercentage,
           };
         });
 
