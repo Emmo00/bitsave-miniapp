@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAccount, useConnect, useChainId, useSwitchChain } from "wagmi";
 import { Button } from "../../components/ui/button";
@@ -41,7 +41,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { createSavingsVault } from "../../onchain/writes";
-import { getTokenBalance } from "../../onchain/reads";
 import CONTRACT_ADDRESSES, { Stablecoin } from "../../constants/addresses";
 import { getSupportedTokens } from "../../lib/tokenUtils";
 import { useToast } from "../../hooks/useToast";
@@ -53,7 +52,6 @@ import {
   createNumericInputHandler,
   createNumericKeyDownHandler,
 } from "../../lib/inputValidation";
-import { formatUnits, parseUnits } from "viem";
 
 export default function VaultCreation() {
   const router = useRouter();
@@ -68,8 +66,6 @@ export default function VaultCreation() {
   const [isCreating, setIsCreating] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [transactionHash, setTransactionHash] = useState<string>("");
-  const [tokenBalance, setTokenBalance] = useState<string>("0");
-  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [vaultData, setVaultData] = useState({
     name: "",
     token: "",
@@ -81,44 +77,6 @@ export default function VaultCreation() {
 
   const totalSteps = 3;
   const progress = (step / totalSteps) * 100;
-
-  // Fetch token balance when token or address changes
-  const fetchTokenBalance = async () => {
-    if (!address || !vaultData.token || !isConnected) {
-      setTokenBalance("0");
-      return;
-    }
-
-    const selectedToken = getSelectedToken();
-    if (!selectedToken) {
-      setTokenBalance("0");
-      return;
-    }
-
-    setIsLoadingBalance(true);
-    try {
-      const balance = await getTokenBalance(
-        address,
-        selectedToken.address as string,
-        vaultData.network
-      );
-      const formattedBalance = formatUnits(
-        balance,
-        selectedToken.decimals || 18
-      );
-      setTokenBalance(formattedBalance);
-    } catch (error) {
-      console.error("Error fetching token balance:", error);
-      setTokenBalance("0");
-    } finally {
-      setIsLoadingBalance(false);
-    }
-  };
-
-  // Effect to fetch balance when dependencies change
-  useEffect(() => {
-    fetchTokenBalance();
-  }, [address, vaultData.token, vaultData.network, isConnected]);
 
   // Get supported tokens for selected network
   const getTokensForNetwork = (networkId: number) => {
@@ -208,16 +166,6 @@ export default function VaultCreation() {
         toast.error("Invalid Amount", "Initial amount cannot be negative");
         return;
       }
-      if (
-        vaultData.initialAmount &&
-        parseFloat(vaultData.initialAmount) > parseFloat(tokenBalance)
-      ) {
-        toast.error(
-          "Insufficient Balance",
-          `You only have ${parseFloat(tokenBalance).toFixed(2)} tokens available`
-        );
-        return;
-      }
     }
 
     // Validate step 2 (Settings)
@@ -273,18 +221,6 @@ export default function VaultCreation() {
 
     if (!vaultData.penalty || parseFloat(vaultData.penalty) < 0) {
       toast.error("Invalid Penalty", "Please enter a valid penalty percentage");
-      return;
-    }
-
-    // Validate balance if initial amount is provided
-    if (
-      vaultData.initialAmount &&
-      parseFloat(vaultData.initialAmount) > parseFloat(tokenBalance)
-    ) {
-      toast.error(
-        "Insufficient Balance",
-        `You only have ${parseFloat(tokenBalance).toFixed(2)} tokens available`
-      );
       return;
     }
 
@@ -506,67 +442,25 @@ export default function VaultCreation() {
                     ))}
                   </SelectContent>
                 </Select>
-                {vaultData.token && isConnected && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Available Balance:</span>
-                    <span className="font-medium text-green-600">
-                      {isLoadingBalance ? (
-                        <div className="flex items-center space-x-1">
-                          <Loader className="w-3 h-3 animate-spin" />
-                          <span>Loading...</span>
-                        </div>
-                      ) : (
-                        `${parseFloat(tokenBalance).toFixed(2)} ${getSelectedToken()?.name || "tokens"}`
-                      )}
-                    </span>
-                  </div>
-                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="initial">Initial Amount (Optional)</Label>
-                <div className="relative">
-                  <Input
-                    id="initial"
-                    type="text"
-                    inputMode="decimal"
-                    pattern="[0-9]*[.,]?[0-9]*"
-                    placeholder="0.00"
-                    value={vaultData.initialAmount}
-                    onChange={createNumericInputHandler(
-                      (value) =>
-                        setVaultData({ ...vaultData, initialAmount: value }),
-                      (value) => sanitizeDecimalInput(value, 2, false)
-                    )}
-                    onKeyDown={createNumericKeyDownHandler(true, false)}
-                    className="rounded-xl pr-16"
-                  />
-                  {vaultData.token && parseFloat(tokenBalance) > 0 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const maxAmount = parseFloat(tokenBalance).toFixed(2);
-                        setVaultData({
-                          ...vaultData,
-                          initialAmount: maxAmount,
-                        });
-                      }}
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 px-2 text-xs text-purple-600 hover:bg-purple-50"
-                    >
-                      Max
-                    </Button>
+                <Input
+                  id="initial"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.,]?[0-9]*"
+                  placeholder="0.00"
+                  value={vaultData.initialAmount}
+                  onChange={createNumericInputHandler(
+                    (value) =>
+                      setVaultData({ ...vaultData, initialAmount: value }),
+                    (value) => sanitizeDecimalInput(value, 2, false)
                   )}
-                </div>
-                {vaultData.initialAmount &&
-                  parseFloat(vaultData.initialAmount) >
-                    parseFloat(tokenBalance) && (
-                    <p className="text-xs text-red-500">
-                      Insufficient balance. You only have{" "}
-                      {parseFloat(tokenBalance).toFixed(2)} tokens available.
-                    </p>
-                  )}
+                  onKeyDown={createNumericKeyDownHandler(true, false)}
+                  className="rounded-xl"
+                />
               </div>
             </div>
           </div>
@@ -851,11 +745,7 @@ export default function VaultCreation() {
                     </h3>
                     <p className="text-sm text-green-600">
                       Saving for {vaultData.duration[0]} months on{" "}
-                      {
-                        config.chains.find(
-                          (chain) => chain.id === config.state.chainId
-                        )?.name
-                      }
+                      {vaultData.network === 8453 ? "Base" : "Celo"}
                     </p>
                   </div>
                 </CardContent>

@@ -3,7 +3,6 @@ import { config } from "../components/providers/WagmiProvider";
 import { readContract } from "@wagmi/core";
 import BITSAVE_ABI from "../abi/BitSave.json";
 import CHILDCONTRACT_ABI from "../abi/ChildContract.json";
-import STABLECOIN_ABI from "../abi/ERC20.json";
 import CONTRACT_ADDRESSES from "../constants/addresses";
 import { Address, zeroAddress } from "viem";
 
@@ -108,25 +107,4 @@ export async function getAllUserSavings(childContract: string) {
   // Return all savings (both valid and invalid)
   // Invalid savings (isValid = false) are completed/withdrawn savings
   return allSavings;
-}
-
-/**
- * Get the balance of a specific ERC20 token for a user
- * @param userAccount - The user's wallet address
- * @param tokenAddress - The ERC20 token contract address
- * @param chainId - The chain ID to query on
- * @returns The balance as a bigint
- */
-export async function getTokenBalance(
-  userAccount: string,
-  tokenAddress: string,
-  chainId: number = config.state.chainId
-): Promise<bigint> {
-  return (await readContract(config, {
-    abi: STABLECOIN_ABI,
-    address: tokenAddress as Address,
-    functionName: "balanceOf",
-    args: [userAccount as Address],
-    chainId: chainId as 8453 | 42220 | 84532 | 44787,
-  })) as bigint;
 }

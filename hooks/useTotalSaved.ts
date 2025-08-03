@@ -1,37 +1,17 @@
 import { useEffect, useState } from "react";
 import { useReadContract, useAccount } from "wagmi";
-import { Address, formatEther, formatUnits, zeroAddress } from "viem";
-import {
-  getUserChildContractFromAnyChain,
-  getUserVaultNames,
-  getSaving,
-} from "../onchain/reads";
+import { Address, formatEther, zeroAddress } from "viem";
+import { getUserChildContractFromAnyChain, getUserVaultNames, getSaving } from "../onchain/reads";
 import CHILDCONTRACT_ABI from "../abi/ChildContract.json";
-import CONTRACT_ADDRESSES from "../constants/addresses";
 
 interface TotalSavedData {
-  totalAmount: string; // Formatted as string for display (normalized to USD value)
-  totalAmountWei: bigint; // Raw wei amount (sum of all tokens in their native decimals)
+  totalAmount: string; // Formatted as string for display
+  totalAmountWei: bigint; // Raw wei amount
   totalRewards: string; // Total interest accumulated
   totalRewardsWei: bigint; // Raw rewards in wei
   savingsCount: number;
   isLoading: boolean;
   error: string | null;
-}
-
-// Helper function to get token decimals from token address
-function getTokenDecimals(tokenAddress: string): number {
-  // Search through all networks and stablecoins to find the token
-  for (const network of Object.values(CONTRACT_ADDRESSES)) {
-    const token = network.STABLECOINS.find(
-      (stablecoin) => stablecoin.address?.toLowerCase() === tokenAddress.toLowerCase()
-    );
-    if (token) {
-      return token.decimals;
-    }
-  }
-  // Default to 18 decimals if token not found (most ERC20 tokens use 18)
-  return 18;
 }
 
 export function useTotalSaved(): TotalSavedData {
@@ -77,9 +57,7 @@ export function useTotalSaved(): TotalSavedData {
           setChildContractInfo(null);
         }
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch child contract"
-        );
+        setError(err instanceof Error ? err.message : "Failed to fetch child contract");
         setChildContractInfo(null);
       } finally {
         setIsLoading(false);
@@ -92,8 +70,7 @@ export function useTotalSaved(): TotalSavedData {
   // Update savings names when data changes
   useEffect(() => {
     if (savingsNamesData) {
-      const names = (savingsNamesData as { savingsNames: string[] })
-        .savingsNames;
+      const names = (savingsNamesData as { savingsNames: string[] }).savingsNames;
       setSavingsNames(names);
     }
   }, [savingsNamesData]);
@@ -110,47 +87,28 @@ export function useTotalSaved(): TotalSavedData {
       setIsLoading(true);
       setError(null);
       try {
-        let totalUsdValue = 0; // Accumulate normalized USD value
-        let totalRawAmount = 0n; // Keep track of raw amounts in wei
+        let total = 0n;
         let rewards = 0n;
 
         // Get all savings data
-        const savingsPromises = savingsNames.map((name) =>
+        const savingsPromises = savingsNames.map(name => 
           getSaving(childContractInfo.address, name)
         );
-
+        
         const savingsData = await Promise.all(savingsPromises);
 
-        console.log("total saved array", savingsData);
-
         // Sum up amounts and rewards for valid savings
-        savingsData.forEach((saving) => {
-          // Get token decimals from the token address
-          const tokenDecimals = getTokenDecimals(saving.tokenId);
-          
-          // Convert the raw amount to a normalized decimal value
-          const normalizedAmount = parseFloat(formatUnits(saving.amount, tokenDecimals));
-          
-          console.log(`Processing saving: token=${saving.tokenId}, decimals=${tokenDecimals}, rawAmount=${saving.amount}, normalizedAmount=${normalizedAmount}`);
-          
-          // Add to USD value total (assuming 1:1 USD for stablecoins)
-          totalUsdValue += normalizedAmount;
-          
-          // Add raw amount (keeping original decimals for wei total)
-          totalRawAmount += saving.amount;
-          
-          // Add rewards (typically in native chain token, keep as is)
-          rewards += saving.interestAccumulated;
+        savingsData.forEach(saving => {
+          if (saving.isValid) {
+            total += saving.amount;
+            rewards += saving.interestAccumulated;
+          }
         });
 
-        console.log(`Total USD value: ${totalUsdValue}, Total raw amount: ${totalRawAmount}, Total rewards: ${rewards}`);
-
-        setTotalAmount(BigInt(Math.round(totalUsdValue * 100))); // Store as cents for precision
+        setTotalAmount(total);
         setTotalRewards(rewards);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to calculate total saved"
-        );
+        setError(err instanceof Error ? err.message : "Failed to calculate total saved");
       } finally {
         setIsLoading(false);
       }
@@ -160,7 +118,7 @@ export function useTotalSaved(): TotalSavedData {
   }, [childContractInfo, savingsNames]);
 
   return {
-    totalAmount: (Number(totalAmount) / 100).toFixed(2), // Convert cents back to dollars with 2 decimal places
+    totalAmount: formatEther(totalAmount),
     totalAmountWei: totalAmount,
     totalRewards: formatEther(totalRewards),
     totalRewardsWei: totalRewards,

@@ -8,6 +8,7 @@ import { Badge } from "../../components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
+import { Progress } from "../../components/ui/progress";
 import { ArrowLeft, Bell, TrendingUp, Coins, Users, Target, PiggyBank, Plus } from "lucide-react";
 import { sanitizeDecimalInput, createNumericInputHandler, createNumericKeyDownHandler } from "../../lib/inputValidation";
 
@@ -295,7 +296,9 @@ export default function NotificationsPanel() {
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs text-gray-600">
                             <span>Current: ${vault.saved}</span>
+                            <span>Target: ${vault.target}</span>
                           </div>
+                          <Progress value={(vault.saved / vault.target) * 100} className="h-1" />
                         </div>
                       </CardContent>
                     </Card>

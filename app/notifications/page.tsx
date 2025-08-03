@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
+import { Progress } from "../../components/ui/progress";
 import { ArrowLeft, TrendingUp, Coins, PiggyBank, Plus } from "lucide-react";
 
 export default function WalletMonitor() {
@@ -101,15 +102,16 @@ export default function WalletMonitor() {
 
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Current Balance</span>
+                      <span className="text-gray-600">Current</span>
                       <span className="font-medium">
-                        ${vault.saved}
+                        ${vault.saved} / ${vault.target}
                       </span>
                     </div>
+                    <Progress value={(vault.saved / vault.target) * 100} className="h-2" />
                   </div>
 
                   <div className="text-xs text-gray-500">
-                    After top up: ${vault.saved + suggestedAmount}
+                    After top up: ${vault.saved + suggestedAmount} / ${vault.target}
                   </div>
                 </CardContent>
               </Card>

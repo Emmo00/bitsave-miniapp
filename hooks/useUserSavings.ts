@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import { Address, formatEther, formatUnits } from "viem";
+import { Address, formatEther } from "viem";
 import { getUserChildContractFromAnyChain, getAllUserSavings } from "../onchain/reads";
-import CONTRACT_ADDRESSES from "../constants/addresses";
 
 export interface SavingDetails {
   name: string;
@@ -19,6 +18,7 @@ export interface SavingDetails {
   isActive: boolean; // true if isValid = true (not withdrawn)
   isMatured: boolean; // true if current time >= maturityTime
   timeToMaturity: number; // in seconds, negative if already matured
+  progressPercentage: number; // progress based on time elapsed
 }
 
 interface UserSavingsData {
@@ -29,21 +29,6 @@ interface UserSavingsData {
   totalCompletedSavings: number;
   isLoading: boolean;
   error: string | null;
-}
-
-// Helper function to get token decimals from token address
-function getTokenDecimals(tokenAddress: string): number {
-  // Search through all networks and stablecoins to find the token
-  for (const network of Object.values(CONTRACT_ADDRESSES)) {
-    const token = network.STABLECOINS.find(
-      (stablecoin) => stablecoin.address?.toLowerCase() === tokenAddress.toLowerCase()
-    );
-    if (token) {
-      return token.decimals;
-    }
-  }
-  // Default to 18 decimals if token not found (most ERC20 tokens use 18)
-  return 18;
 }
 
 export function useUserSavings(): UserSavingsData {
@@ -109,23 +94,27 @@ export function useUserSavings(): UserSavingsData {
           const startTimeSeconds = Number(saving.startTime);
           const currentTime = Math.floor(Date.now() / 1000);
           
-          // Get token decimals for proper formatting
-          const tokenDecimals = getTokenDecimals(saving.tokenId);
-          
           // Active = isValid true (not withdrawn)
           // Completed = isValid false (withdrawn)
           const isActive = saving.isValid;
           const isCompleted = !saving.isValid;
           const isMatured = currentTime >= maturityTimeSeconds;
           const timeToMaturity = maturityTimeSeconds - currentTime;
+          
+          // Calculate progress percentage based on time elapsed
+          const totalDuration = maturityTimeSeconds - startTimeSeconds;
+          const timeElapsed = currentTime - startTimeSeconds;
+          const progressPercentage = totalDuration > 0 
+            ? Math.min(100, Math.max(0, (timeElapsed / totalDuration) * 100))
+            : 100;
 
           return {
             name: saving.name,
             amount: saving.amount,
-            amountFormatted: formatUnits(saving.amount, tokenDecimals),
+            amountFormatted: formatEther(saving.amount),
             tokenId: saving.tokenId,
             interestAccumulated: saving.interestAccumulated,
-            interestFormatted: formatEther(saving.interestAccumulated), // Interest is in native token (ETH/MATIC etc)
+            interestFormatted: formatEther(saving.interestAccumulated),
             startTime: saving.startTime,
             penaltyPercentage: saving.penaltyPercentage,
             maturityTime: saving.maturityTime,
@@ -134,6 +123,7 @@ export function useUserSavings(): UserSavingsData {
             isActive,
             isMatured,
             timeToMaturity,
+            progressPercentage,
           };
         });
 
