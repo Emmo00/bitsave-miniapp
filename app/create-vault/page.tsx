@@ -304,18 +304,33 @@ export default function VaultCreation() {
 
   // Calculate estimated interest rate (realistic DeFi rates)
   const calculateInterestRate = (): number => {
-    const durationMonths = vaultData.duration[0];
+    const durationMonths = vaultData.duration[0] || 1; // Default to 1 month if invalid
     // Base rate: 4% annually, with bonus for longer commitments
     const baseRate = 0.04; // 4%
     const durationBonus = Math.min(0.02, (durationMonths - 1) * 0.001); // Up to 2% bonus for longer terms
-    return baseRate + durationBonus;
+    const totalRate = baseRate + durationBonus;
+    
+    // Ensure we return a valid number
+    return isNaN(totalRate) ? 0.04 : totalRate;
   };
 
   // Calculate estimated BTS rewards
   const calculateEstimatedRewards = (): string => {
-    const initialAmount = parseFloat(vaultData.initialAmount || "0");
-    const durationMonths = vaultData.duration[0];
+    // Safely parse initial amount, default to 0 if invalid
+    const initialAmountString = vaultData.initialAmount?.trim() || "0";
+    const initialAmount = parseFloat(initialAmountString) || 0;
+    
+    const durationMonths = vaultData.duration[0] || 1; // Default to 1 month if invalid
     const annualRate = calculateInterestRate();
+
+    // Debug logging
+    console.log("calculateEstimatedRewards debug:", {
+      initialAmountString,
+      initialAmount,
+      durationMonths,
+      annualRate,
+      vaultData: vaultData
+    });
 
     // Calculate interest for the duration
     const monthlyRate = annualRate / 12;
@@ -329,7 +344,16 @@ export default function VaultCreation() {
 
     const totalBtsRewards = btsRewards + commitmentBonus;
 
-    return Math.max(0.1, totalBtsRewards).toFixed(1); // Minimum 0.1 BTS
+    // Ensure we always return a valid number, minimum 0.1 BTS
+    const finalRewards = Math.max(0.1, totalBtsRewards);
+    
+    // Check if the result is NaN and provide fallback
+    if (isNaN(finalRewards)) {
+      console.error("calculateEstimatedRewards returned NaN, using fallback");
+      return "0.1"; // Fallback minimum
+    }
+
+    return finalRewards.toFixed(1);
   };
 
   const renderStep = () => {
@@ -362,6 +386,7 @@ export default function VaultCreation() {
                       token: "",
                     })
                   }
+                  disabled
                 >
                   <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Select network" />
@@ -491,7 +516,7 @@ export default function VaultCreation() {
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + vaultData.duration[0]);
         const selectedToken = getSelectedToken();
-        const networkName = vaultData.network === 8453 ? "Base" : "Celo";
+        const networkName = config.chains.find(chain => chain.id === config.state.chainId)?.name;
 
         return (
           <div className="space-y-6">
@@ -567,12 +592,20 @@ export default function VaultCreation() {
                   <div className="flex items-center space-x-2">
                     <Coins className="w-4 h-4 text-yellow-500" />
                     <span className="text-lg font-bold text-green-600">
-                      ~{calculateEstimatedRewards()} $BTS
+                      ~{(() => {
+                        try {
+                          const rewards = calculateEstimatedRewards();
+                          return rewards || "0.1";
+                        } catch (error) {
+                          console.error("Error calculating rewards:", error);
+                          return "0.1";
+                        }
+                      })()} $BTS
                     </span>
                   </div>
                   <p className="text-xs text-gray-500">
                     Estimated based on{" "}
-                    {(calculateInterestRate() * 100).toFixed(1)}% annual rate
+                    {((calculateInterestRate() || 0.04) * 100).toFixed(1)}% annual rate
                   </p>
                 </div>
               </CardContent>
