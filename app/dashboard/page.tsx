@@ -181,43 +181,6 @@ export default function Dashboard() {
                 )}
               </div>
             )}
-
-            {/* Keep the old mock vaults for now, but commented out
-            {mockVaults.map((vault) => (
-              <Card key={vault.id} className="border-gray-200">
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-gray-900">{vault.name}</h4>
-                    <Badge variant="secondary" className="bg-green-100 text-green-700">
-                      Active
-                    </Badge>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Progress</span>
-                      <span className="font-medium">
-                        ${vault.saved} / ${vault.target}
-                      </span>
-                    </div>
-                    <Progress value={vault.progress} className="h-2" />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center space-x-1 text-sm text-green-600">
-                      <Coins className="w-4 h-4" />
-                      <span>+{vault.rewards} $BTS</span>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs bg-transparent"
-                      onClick={() => router.push(`/top-up?vault=${vault.id}`)}
-                    >
-                      Top Up
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))} */}
           </div>
 
           {/* Wallet Watch */}
