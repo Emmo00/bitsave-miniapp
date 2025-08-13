@@ -19,7 +19,7 @@ export default function App() {
 
       {/* Bottom Navigation */}
       {!["create", "settings"].includes(currentTab) && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-xs bg-black rounded-full px-6 py-3 shadow-lg">
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-xs bg-black rounded-full px-6 py-3 shadow-lg transition-all duration-300 ease-out animate-slide-up">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
