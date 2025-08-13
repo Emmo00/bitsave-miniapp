@@ -13,7 +13,7 @@
   "types": "./index.d.ts",
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build:raw": "next build",
     "start": "next start",
     "format": "prettier --write .",
