@@ -4,7 +4,8 @@ import { useState } from "react";
 
 import { Home, TrendingUp, Plus, User, PiggyBank } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import HomePage from "./HomePage";
+import HomePage from "@/components/pages/HomePage";
+import CreatePlanPage from "@/components/pages/CreatePlanPage";
 
 export default function App() {
   const currentTabNavButtonStyle =
@@ -16,6 +17,9 @@ export default function App() {
   return (
     <div className="max-w-sm mx-auto min-h-screen bg-gradient-to-br from-green-400 to-blue-500 font-grotesk">
       {currentTab === "home" && <HomePage setCurrentTab={setCurrentTab} />}
+      {currentTab === "create" && (
+        <CreatePlanPage setCurrentTab={setCurrentTab} />
+      )}
 
       {/* Bottom Navigation */}
       {!["create", "settings"].includes(currentTab) && (
