@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -8,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@radix-ui/react-label";
-import { ArrowRight, ArrowUpRight, X } from "lucide-react";
+import { ArrowRight, ArrowLeft, ArrowUpRight, X, Check, Share2, ExternalLink } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
@@ -30,13 +31,75 @@ export default function CreatePlanPage({
 }: {
   setCurrentTab: (tab: any) => void;
 }) {
+  const [currentStep, setCurrentStep] = useState<"form" | "preview" | "loading" | "success">("form");
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [formData, setFormData] = useState({
+    planName: "",
+    planAmount: "",
+    selectedChain: config.chains[0].id.toString(),
+    selectedToken: getSupportedTokens("BASE")[0].address || "",
+    maturityDate: new Date(),
+    penaltyFee: "",
+  });
+
+  const loadingSteps = [
+    { id: 1, title: "Join Bitsave", description: "Setting up your account..." },
+    { id: 2, title: "Approve Token Send", description: "Approving token transfer..." },
+    { id: 3, title: "Create Savings Plan", description: "Creating your savings plan..." },
+    { id: 4, title: "Finalizing", description: "Completing setup..." }
+  ];
+
+  const handleNext = () => {
+    // Here you could add form validation
+    setCurrentStep("preview");
+  };
+
+  const handleBack = () => {
+    setCurrentStep("form");
+  };
+
+  const handleSave = () => {
+    setCurrentStep("loading");
+    setLoadingStep(0);
+    
+    // Simulate the loading process
+    const simulateLoading = async () => {
+      for (let i = 1; i <= 4; i++) {
+        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay for each step
+        setLoadingStep(i);
+      }
+      // After all steps complete, show success
+      setTimeout(() => {
+        setCurrentStep("success");
+      }, 500);
+    };
+    
+    simulateLoading();
+  };
+
+  const handleShare = () => {
+    const shareText = `I just created a savings plan on BitSave! 💰 Saving $${formData.planAmount || "1000"} for ${formData.planName || "my goal"}. Join me in building better financial habits! 🚀`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'My BitSave Savings Plan',
+        text: shareText,
+        url: window.location.href,
+      });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(shareText);
+      alert('Share text copied to clipboard!');
+    }
+  };
+
   return (
     <>
       <style jsx>{`
         @keyframes slideUpFromBottom {
           0% {
-            opacity: 0;
-            transform: translateY(100%);
+            opacity: 0.5;
+            transform: translateY(10%);
           }
           100% {
             opacity: 1;
@@ -44,11 +107,53 @@ export default function CreatePlanPage({
           }
         }
         
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
+        }
+        
+        @keyframes checkmark {
+          0% {
+            opacity: 0;
+            transform: scale(0);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        
+        @keyframes celebrate {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.1);
+          }
+        }
+        
         .slide-up {
-          animation: slideUpFromBottom 0.4s ease-out;
+          animation: slideUpFromBottom 0.3s ease-out;
+        }
+        
+        .pulse {
+          animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        .checkmark {
+          animation: checkmark 0.5s ease-out;
+        }
+        
+        .celebrate {
+          animation: celebrate 0.8s ease-in-out;
         }
       `}</style>
       <div className="pt-[10vh] text-black">
+        {currentStep === "form" && (
         <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl slide-up">
         <div className="flex justify-end">
           <button
@@ -65,7 +170,13 @@ export default function CreatePlanPage({
           <Label htmlFor="plan-name" className="text-xs font-grotesk text-gray-800">
             Plan Name
           </Label>
-          <Input id="plan-name" placeholder="Emergency Fund" className="bg-white/30 backdrop-blur-sm border-white/40" />
+          <Input 
+            id="plan-name" 
+            placeholder="Emergency Fund" 
+            className="bg-white/30 backdrop-blur-sm border-white/40" 
+            value={formData.planName}
+            onChange={(e) => setFormData({...formData, planName: e.target.value})}
+          />
         </div>
 
         {/* Amount */}
@@ -73,13 +184,23 @@ export default function CreatePlanPage({
           <Label htmlFor="plan-amount" className="text-xs font-grotesk text-gray-800">
             Plan Amount ($)
           </Label>
-          <Input id="plan-amount" type="number" placeholder="1000" className="bg-white/30 backdrop-blur-sm border-white/40" />
+          <Input 
+            id="plan-amount" 
+            type="number" 
+            placeholder="1000" 
+            className="bg-white/30 backdrop-blur-sm border-white/40" 
+            value={formData.planAmount}
+            onChange={(e) => setFormData({...formData, planAmount: e.target.value})}
+          />
         </div>
 
         {/* Chain */}
         <div className="mb-1">
           <Label className="text-gray-800">Chain</Label>
-          <Select value={config.chains[0].id.toString()}>
+          <Select 
+            value={formData.selectedChain}
+            onValueChange={(value) => setFormData({...formData, selectedChain: value})}
+          >
             <SelectTrigger className="rounded-xl bg-white/30 backdrop-blur-sm border-white/40">
               <SelectValue placeholder="Select network" />
             </SelectTrigger>
@@ -96,7 +217,10 @@ export default function CreatePlanPage({
         {/* currency */}
         <div className="mb-1">
           <Label className="text-gray-800">Currency</Label>
-          <Select value={getSupportedTokens("BASE")[0].address || ""}>
+          <Select 
+            value={formData.selectedToken}
+            onValueChange={(value) => setFormData({...formData, selectedToken: value})}
+          >
             <SelectTrigger className="rounded-xl bg-white/30 backdrop-blur-sm border-white/40">
               <SelectValue placeholder="Select token" />
             </SelectTrigger>
@@ -155,12 +279,19 @@ export default function CreatePlanPage({
           <Label htmlFor="penalty-fee" className="text-xs font-grotesk text-gray-800">
             Penalty Fee (%)
           </Label>
-          <Input id="penalty-fee" type="number" placeholder="5" className="bg-white/30 backdrop-blur-sm border-white/40" />
+          <Input 
+            id="penalty-fee" 
+            type="number" 
+            placeholder="5" 
+            className="bg-white/30 backdrop-blur-sm border-white/40" 
+            value={formData.penaltyFee}
+            onChange={(e) => setFormData({...formData, penaltyFee: e.target.value})}
+          />
         </div>
 
         {/* Action - next, cancel */}
         <div className="flex flex-col gap-2 justify-center space-x-2 mt-16">
-          <Button onClick={() => {}} className="bg-orange-500/80 backdrop-blur-sm border border-orange-400/50 hover:bg-orange-600/80">
+          <Button onClick={handleNext} className="bg-orange-500/80 backdrop-blur-sm border border-orange-400/50 hover:bg-orange-600/80">
             Next <ArrowRight className="w-4 h-4" />
           </Button>
           <Button variant="outline" className="border-none bg-white/20 backdrop-blur-sm hover:bg-white/30 text-gray-800" onClick={() => setCurrentTab("home")}>
@@ -168,6 +299,226 @@ export default function CreatePlanPage({
           </Button>
         </div>
       </div>
+        )}
+        
+        {currentStep === "preview" && (
+        <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl slide-up">
+          <div className="flex items-center justify-between mb-6">
+            <button
+              type="button"
+              aria-label="Back"
+              className="p-2 rounded-full hover:bg-white/20 backdrop-blur-sm border border-white/30 transition-all duration-200"
+              onClick={handleBack}
+            >
+              <ArrowLeft className="w-4 h-4 text-gray-800" />
+            </button>
+            <h2 className="text-lg font-semibold text-gray-800">Preview Plan</h2>
+            <button
+              type="button"
+              aria-label="Close"
+              className="p-2 rounded-full hover:bg-white/20 backdrop-blur-sm border border-white/30 transition-all duration-200"
+              onClick={() => setCurrentTab("home")}
+            >
+              <X className="w-4 h-4 text-gray-800" />
+            </button>
+          </div>
+          
+          {/* Preview Card */}
+          <div className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-2xl p-6 mb-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 text-sm">Plan Name:</span>
+                <span className="text-gray-800 font-medium">{formData.planName || "Emergency Fund"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 text-sm">Target Amount:</span>
+                <span className="text-gray-800 font-medium">${formData.planAmount || "1000"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 text-sm">Chain:</span>
+                <span className="text-gray-800 font-medium">
+                  {config.chains.find(chain => chain.id.toString() === formData.selectedChain)?.name || "Base"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 text-sm">Currency:</span>
+                <span className="text-gray-800 font-medium">
+                  {getSupportedTokens("BASE").find(token => token.address === formData.selectedToken)?.name || "USDC"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 text-sm">Maturity Date:</span>
+                <span className="text-gray-800 font-medium">
+                  {format(formData.maturityDate, "MMM dd, yyyy")}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 text-sm">Penalty Fee:</span>
+                <span className="text-gray-800 font-medium">{formData.penaltyFee || "5"}%</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Summary */}
+          <div className="bg-gradient-to-r from-orange-100/50 to-orange-200/50 backdrop-blur-sm border border-orange-200/40 rounded-xl p-4 mb-8">
+            <p className="text-orange-800 text-sm font-medium">
+              You're creating a savings plan that will help you reach your goal of ${formData.planAmount || "1000"} by {format(formData.maturityDate, "MMM yyyy")}!
+            </p>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-3 mt-8">
+            <Button 
+              onClick={handleSave} 
+              className="bg-green-500/80 backdrop-blur-sm border border-green-400/50 hover:bg-green-600/80 text-white"
+            >
+              Save Now ✨
+            </Button>
+            <Button 
+              variant="outline" 
+              className="border-none bg-white/20 backdrop-blur-sm hover:bg-white/30 text-gray-800" 
+              onClick={handleBack}
+            >
+              Back to Edit
+            </Button>
+          </div>
+        </div>
+        )}
+        
+        {currentStep === "loading" && (
+        <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl slide-up">
+          <div className="flex justify-center mb-8">
+            <h2 className="text-xl font-semibold text-gray-800">Creating Your Savings Plan</h2>
+          </div>
+          
+          {/* Loading Steps */}
+          <div className="space-y-6 max-w-md mx-auto">
+            {loadingSteps.map((step, index) => (
+              <div key={step.id} className="flex items-center space-x-4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
+                  loadingStep >= step.id 
+                    ? 'bg-green-500/80 border-green-400 text-white' 
+                    : loadingStep === step.id - 1
+                    ? 'bg-orange-500/80 border-orange-400 text-white pulse'
+                    : 'bg-white/30 border-white/40 text-gray-600'
+                }`}>
+                  {loadingStep >= step.id ? (
+                    <Check className="w-6 h-6 checkmark" />
+                  ) : (
+                    <span className="text-sm font-semibold">{step.id}</span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className={`font-medium transition-colors duration-500 ${
+                    loadingStep >= step.id ? 'text-green-700' : 'text-gray-700'
+                  }`}>
+                    {step.title}
+                  </h3>
+                  <p className="text-sm text-gray-600">{step.description}</p>
+                </div>
+                {loadingStep === step.id - 1 && (
+                  <div className="w-4 h-4 bg-orange-500 rounded-full pulse"></div>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="mt-12">
+            <div className="w-full bg-white/30 rounded-full h-2 backdrop-blur-sm">
+              <div 
+                className="bg-gradient-to-r from-orange-500 to-green-500 h-2 rounded-full transition-all duration-1000 ease-out"
+                style={{ width: `${(loadingStep / 4) * 100}%` }}
+              ></div>
+            </div>
+            <p className="text-center text-sm text-gray-600 mt-3">
+              Step {loadingStep} of 4 completed
+            </p>
+          </div>
+        </div>
+        )}
+        
+        {currentStep === "success" && (
+        <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl slide-up">
+          <div className="text-center">
+            <div className="flex justify-end mb-4">
+              <button
+                type="button"
+                aria-label="Close"
+                className="p-2 rounded-full hover:bg-white/20 backdrop-blur-sm border border-white/30 transition-all duration-200"
+                onClick={() => setCurrentTab("home")}
+              >
+                <X className="w-4 h-4 text-gray-800" />
+              </button>
+            </div>
+            
+            {/* Success Animation */}
+            <div className="mb-8">
+              <div className="w-24 h-24 mx-auto bg-green-500/80 rounded-full flex items-center justify-center mb-6 celebrate">
+                <Check className="w-12 h-12 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Success! 🎉</h2>
+              <p className="text-gray-700">Your savings plan has been created successfully!</p>
+            </div>
+            
+            {/* Plan Summary */}
+            <div className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-2xl p-6 mb-8">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Your New Savings Plan</h3>
+              <div className="space-y-3 text-left">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Plan Name:</span>
+                  <span className="text-gray-800 font-medium">{formData.planName || "Emergency Fund"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Target Amount:</span>
+                  <span className="text-gray-800 font-medium">${formData.planAmount || "1000"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Maturity Date:</span>
+                  <span className="text-gray-800 font-medium">
+                    {format(formData.maturityDate, "MMM dd, yyyy")}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <Button 
+                onClick={handleShare} 
+                className="w-full bg-blue-500/80 backdrop-blur-sm border border-blue-400/50 hover:bg-blue-600/80 text-white"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Share to Social Media
+              </Button>
+              <Button 
+                onClick={() => setCurrentTab("home")} 
+                className="w-full bg-orange-500/80 backdrop-blur-sm border border-orange-400/50 hover:bg-orange-600/80 text-white"
+              >
+                View My Savings Plans
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full border-none bg-white/20 backdrop-blur-sm hover:bg-white/30 text-gray-800" 
+                onClick={() => {
+                  setCurrentStep("form");
+                  setLoadingStep(0);
+                  setFormData({
+                    planName: "",
+                    planAmount: "",
+                    selectedChain: config.chains[0].id.toString(),
+                    selectedToken: getSupportedTokens("BASE")[0].address || "",
+                    maturityDate: new Date(),
+                    penaltyFee: "",
+                  });
+                }}
+              >
+                Create Another Plan
+              </Button>
+            </div>
+          </div>
+        </div>
+        )}
       </div>
     </>
   );
