@@ -4,12 +4,78 @@ import { TrendingUp } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState } from "react";
+import SavingsPlanDetailsPage from "./SavingsPlanDetailsPage";
+
+// Mock interface for UI development
+interface MockSavingDetails {
+  name: string;
+  amountFormatted: string;
+  tokenId: string;
+  startTime: number;
+  maturityTime: number;
+  timeToMaturity: number;
+  interestFormatted: string;
+  penaltyPercentage: number;
+  isActive: boolean;
+  isMatured: boolean;
+}
 
 export default function HomePage({
   setCurrentTab,
 }: {
   setCurrentTab: (tab: any) => void;
 }) {
+  const [selectedSaving, setSelectedSaving] = useState<MockSavingDetails | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+
+  // Mock data for the home page savings plans
+  const mockHomeSavings: MockSavingDetails[] = [
+    {
+      name: "Apple MacBook Air",
+      amountFormatted: "595",
+      tokenId: "cUSD",
+      startTime: 1656720000, // July 2, 2022
+      maturityTime: 1724371200, // August 23, 2025
+      timeToMaturity: 1724371200 - Math.floor(Date.now() / 1000),
+      interestFormatted: "23.8",
+      penaltyPercentage: 5,
+      isActive: true,
+      isMatured: false
+    },
+    {
+      name: "Emergency Fund",
+      amountFormatted: "1200",
+      tokenId: "USDC",
+      startTime: 1672531200, // Jan 1, 2023
+      maturityTime: 1735689600, // Jan 1, 2025
+      timeToMaturity: 1735689600 - Math.floor(Date.now() / 1000),
+      interestFormatted: "48.0",
+      penaltyPercentage: 3,
+      isActive: true,
+      isMatured: false
+    }
+  ];
+
+  const handleCardClick = (saving: MockSavingDetails) => {
+    setSelectedSaving(saving);
+    setShowDetails(true);
+  };
+
+  const handleBackFromDetails = () => {
+    setShowDetails(false);
+    setSelectedSaving(null);
+  };
+
+  if (showDetails) {
+    return (
+      <SavingsPlanDetailsPage 
+        savingDetails={selectedSaving}
+        setCurrentTab={setCurrentTab}
+        onBack={handleBackFromDetails}
+      />
+    );
+  }
   return (
     <>
       <style jsx>{`
@@ -30,6 +96,17 @@ export default function HomePage({
           }
           100% {
             opacity: 1;
+          }
+        }
+        
+        @keyframes fadeInUp {
+          0% {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
           }
         }
       `}</style>
@@ -82,61 +159,42 @@ export default function HomePage({
               see all
             </button>
           </div>
-          <Card 
-            className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 mb-6 shadow-lg"
-            style={{
-              animation: "fadeInUp 0.3s ease-out 0.3s both"
-            }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h3 className="text-gray-800 font-medium mb-1">
-                  Apple MacBook Air
-                </h3>
-                <p className="text-gray-700 text-sm">$595</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="bg-orange-100/80 backdrop-blur-sm rounded-lg flex items-center justify-center border border-orange-200/50">
-                  <div className="text-xs py-1 px-2">
-                    <span>cUSD</span> on <span>CELO</span>
+          {mockHomeSavings.map((saving, index) => (
+            <Card 
+              key={index}
+              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 mb-6 shadow-lg cursor-pointer hover:bg-white/15 transition-all duration-300 transform hover:scale-105"
+              style={{
+                animation: `fadeInUp 0.3s ease-out ${0.3 + index * 0.1}s both`
+              }}
+              onClick={() => handleCardClick(saving)}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="text-gray-800 font-medium mb-1">
+                    {saving.name}
+                  </h3>
+                  <p className="text-gray-700 text-sm">{saving.amountFormatted} {saving.tokenId}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="bg-orange-100/80 backdrop-blur-sm rounded-lg flex items-center justify-center border border-orange-200/50">
+                    <div className="text-xs py-1 px-2">
+                      <span>{saving.tokenId}</span> on <span>CELO</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <Progress value={42} className="h-2 bg-white/20 backdrop-blur-sm border border-white/30" />
-            <div className="flex justify-between pt-2">
-              <span></span>
-              <span className="text-xs text-green-600">Matures: 8/23/2025</span>
-            </div>
-          </Card>
-
-          <Card 
-            className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 mb-6 shadow-lg"
-            style={{
-              animation: "fadeInUp 0.3s ease-out 0.3s both"
-            }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h3 className="text-gray-800 font-medium mb-1">
-                  Apple MacBook Air
-                </h3>
-                <p className="text-gray-700 text-sm">$595</p>
+              <Progress 
+                value={Math.min(((Date.now() / 1000 - saving.startTime) / (saving.maturityTime - saving.startTime)) * 100, 100)} 
+                className="h-2 bg-white/20 backdrop-blur-sm border border-white/30" 
+              />
+              <div className="flex justify-between pt-2">
+                <span></span>
+                <span className="text-xs text-green-600">
+                  Matures: {new Date(saving.maturityTime * 1000).toLocaleDateString()}
+                </span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="bg-orange-100/80 backdrop-blur-sm rounded-lg flex items-center justify-center border border-orange-200/50">
-                  <div className="text-xs py-1 px-2">
-                    <span>cUSD</span> on <span>CELO</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <Progress value={42} className="h-2 bg-white/20 backdrop-blur-sm border border-white/30" />
-            <div className="flex justify-between pt-2">
-              <span></span>
-              <span className="text-xs text-green-600">Matures: 8/23/2025</span>
-            </div>
-          </Card>
+            </Card>
+          ))}
         </div>
       </div>
     </>
