@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import HomePage from "@/components/pages/HomePage";
 import CreatePlanPage from "@/components/pages/CreatePlanPage";
 import BottomNavigation from "@/components/navigation/BottomNavigation";
+import VaultsPage from "./pages/VaultsPage";
 
 export default function App() {
   const params = useParams<{ tab: string }>();
@@ -34,7 +35,7 @@ export default function App() {
         <div className="bubble bubble-5"></div>
         <div className="bubble bubble-6"></div>
       </div>
-      
+
       <style jsx>{`
         .bubble {
           position: absolute;
@@ -42,7 +43,7 @@ export default function App() {
           opacity: 0.3;
           animation: float 8s ease-in-out infinite;
         }
-        
+
         .bubble-1 {
           width: 60px;
           height: 60px;
@@ -52,7 +53,7 @@ export default function App() {
           animation-delay: 0s;
           animation-duration: 12s;
         }
-        
+
         .bubble-2 {
           width: 40px;
           height: 40px;
@@ -62,7 +63,7 @@ export default function App() {
           animation-delay: -2s;
           animation-duration: 10s;
         }
-        
+
         .bubble-3 {
           width: 80px;
           height: 80px;
@@ -72,7 +73,7 @@ export default function App() {
           animation-delay: -4s;
           animation-duration: 14s;
         }
-        
+
         .bubble-4 {
           width: 35px;
           height: 35px;
@@ -82,7 +83,7 @@ export default function App() {
           animation-delay: -1s;
           animation-duration: 11s;
         }
-        
+
         .bubble-5 {
           width: 50px;
           height: 50px;
@@ -92,7 +93,7 @@ export default function App() {
           animation-delay: -3s;
           animation-duration: 13s;
         }
-        
+
         .bubble-6 {
           width: 25px;
           height: 25px;
@@ -102,9 +103,10 @@ export default function App() {
           animation-delay: -5s;
           animation-duration: 9s;
         }
-        
+
         @keyframes float {
-          0%, 100% {
+          0%,
+          100% {
             transform: translateY(0px) translateX(0px) scale(1);
             opacity: 0.3;
           }
@@ -118,15 +120,19 @@ export default function App() {
           }
         }
       `}</style>
-      
+
       <div className="w-full relative z-10">
         {currentTab === "home" && <HomePage setCurrentTab={setCurrentTab} />}
         {currentTab === "create" && (
           <CreatePlanPage setCurrentTab={setCurrentTab} />
         )}
+        {currentTab === "vaults" && <VaultsPage setCurrentTab={setCurrentTab} />}
 
         {/* Bottom Navigation */}
-        <BottomNavigation currentTab={currentTab} setCurrentTab={setCurrentTab} />
+        <BottomNavigation
+          currentTab={currentTab}
+          setCurrentTab={setCurrentTab}
+        />
       </div>
     </div>
   );

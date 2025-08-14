@@ -23,6 +23,10 @@ const config: Config = {
         grotesk: ["Space Grotesk", "sans-serif"],
       },
       colors: {
+        weirdBlue: "#229ED9",
+        weirdGreen: "#81D7B4",
+        "weirdGreen-90": "#81D7B490",
+        "weirdGreen-80": "#81D7B480",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
