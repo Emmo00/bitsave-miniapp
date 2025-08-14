@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "../ui/button";
 import { useState } from "react";
 import SavingsPlanDetailsPage from "./SavingsPlanDetailsPage";
+import TopUpModal from "@/components/TopUpModal";
+import WithdrawModal from "@/components/WithdrawModal";
 
 // vaults = "saving plans"
 
@@ -150,26 +152,46 @@ export default function VaultsPage({ setCurrentTab }: Props) {
             <div className="flex justify-between">
               <div></div>
               <div className="flex justify-center items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  className="mt-4 mr-2"
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent card click
-                    // Handle withdraw action
+                <WithdrawModal
+                  planName={saving.name}
+                  tokenSymbol={saving.tokenId}
+                  totalAmount={saving.amountFormatted}
+                  isMatured={saving.isMatured}
+                  penaltyPercentage={saving.penaltyPercentage}
+                  maturityDate={new Date(saving.maturityTime * 1000)}
+                  onWithdraw={() => {
+                    // Handle the withdraw action here
+                    console.log(`Withdrew from ${saving.name}`);
                   }}
                 >
-                  <ChevronDown className="" /> Withdraw
-                </Button>
-                <Button
-                  variant="outline"
-                  className="bg-gradient-to-r from-weirdGreen-80 to-weirdGreen text-white font-medium py-2 rounded-lg"
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent card click
-                    // Handle deposit action
+                  <Button 
+                    variant="outline" 
+                    className="mt-4 mr-2"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent card click
+                    }}
+                  >
+                    <ChevronDown className="" /> Withdraw
+                  </Button>
+                </WithdrawModal>
+                <TopUpModal 
+                  planName={saving.name}
+                  tokenSymbol={saving.tokenId}
+                  onTopUp={(amount) => {
+                    // Handle the top up action here
+                    console.log(`Topped up ${amount} ${saving.tokenId} to ${saving.name}`);
                   }}
                 >
-                  <Plus className="" /> Deposit
-                </Button>
+                  <Button
+                    variant="outline"
+                    className="bg-gradient-to-r from-weirdGreen-80 to-weirdGreen text-white font-medium py-2 rounded-lg mt-4"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent card click
+                    }}
+                  >
+                    <Plus className="" /> Deposit
+                  </Button>
+                </TopUpModal>
               </div>
             </div>
           </Card>

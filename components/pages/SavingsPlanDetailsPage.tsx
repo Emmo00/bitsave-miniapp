@@ -17,6 +17,8 @@ import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import TopUpModal from "@/components/TopUpModal";
+import WithdrawModal from "@/components/WithdrawModal";
 
 // Mock interface for UI development
 interface MockSavingDetails {
@@ -322,22 +324,44 @@ export default function SavingsPlanDetailsPage({
               animation: "fadeInUp 0.3s ease-out 0.4s both"
             }}
           >
-            <Button 
-              variant="outline" 
-              className="flex-1 bg-white/20 backdrop-blur-md border border-white/30 hover:bg-white/30 transition-all duration-300 text-gray-800 font-medium py-3 rounded-xl"
-              disabled={isLoading}
+            <WithdrawModal
+              planName={savingDetails.name}
+              tokenSymbol={savingDetails.tokenId}
+              totalAmount={savingDetails.amountFormatted}
+              isMatured={savingDetails.isMatured}
+              penaltyPercentage={savingDetails.penaltyPercentage}
+              maturityDate={new Date(savingDetails.maturityTime * 1000)}
+              onWithdraw={() => {
+                // Handle the withdraw action here
+                console.log(`Withdrew from ${savingDetails.name}`);
+              }}
             >
-              <Download className="w-4 h-4 mr-2" />
-              Withdraw
-            </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1 bg-white/20 backdrop-blur-md border border-white/30 hover:bg-white/30 transition-all duration-300 text-gray-800 font-medium py-3 rounded-xl"
+                disabled={isLoading}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Withdraw
+              </Button>
+            </WithdrawModal>
             
-            <Button 
-              className="flex-1 bg-gradient-to-r from-weirdGreen-80 to-weirdGreen text-white font-medium py-3 rounded-xl hover:shadow-xl transform hover:scale-105 transition-all duration-300 shadow-lg"
-              disabled={isLoading}
+            <TopUpModal 
+              planName={savingDetails.name}
+              tokenSymbol={savingDetails.tokenId}
+              onTopUp={(amount) => {
+                // Handle the top up action here
+                console.log(`Topped up ${amount} ${savingDetails.tokenId} to ${savingDetails.name}`);
+              }}
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Top Up
-            </Button>
+              <Button 
+                className="flex-1 bg-gradient-to-r from-weirdGreen-80 to-weirdGreen text-white font-medium py-3 rounded-xl hover:shadow-xl transform hover:scale-105 transition-all duration-300 shadow-lg"
+                disabled={isLoading}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Top Up
+              </Button>
+            </TopUpModal>
           </div>
 
           {/* Activities Section */}
