@@ -24,6 +24,7 @@ const config: Config = {
       },
       colors: {
         weirdBlue: "#229ED9",
+        "weirdBlue-80": "#229ED980",
         weirdGreen: "#81D7B4",
         "weirdGreen-90": "#81D7B490",
         "weirdGreen-80": "#81D7B480",
