@@ -5,6 +5,8 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
+  DialogOverlay,
+  DialogPortal,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -140,7 +142,9 @@ export default function TopUpModal({
         <DialogTrigger asChild>
           {children}
         </DialogTrigger>
-        <DialogContent className="bg-white/40 backdrop-blur-2xl backdrop-brightness-110 border border-white/50 shadow-2xl max-w-md rounded-2xl backdrop-saturate-200">
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 z-50 bg-black/0 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <DialogContent className="bg-white/90 backdrop-blur-3xl backdrop-brightness-125 border border-white/100 shadow-2xl max-w-md rounded-2xl backdrop-saturate-200 fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 p-6 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]">
           {currentStep === "form" && (
             <div className="p-2">
               <div className="text-center mb-6">
@@ -206,7 +210,7 @@ export default function TopUpModal({
                   <Button 
                     variant="outline"
                     onClick={handleClose}
-                    className="flex-1 bg-white/10 backdrop-blur-sm border-white/30 hover:bg-white/20 text-gray-800"
+                    className="flex-1 bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/30 text-gray-800"
                   >
                     Cancel
                   </Button>
@@ -239,7 +243,7 @@ export default function TopUpModal({
                         ? 'bg-green-500/80 border-green-400 text-white backdrop-blur-sm' 
                         : loadingStep === step.id - 1
                         ? 'bg-orange-500/80 border-orange-400 text-white pulse backdrop-blur-sm'
-                        : 'bg-white/10 border-white/20 text-gray-600 backdrop-blur-sm'
+                        : 'bg-white/20 border-white/30 text-gray-600 backdrop-blur-sm'
                     }`}>
                       {loadingStep >= step.id ? (
                         <Check className="w-6 h-6 checkmark" />
@@ -264,7 +268,7 @@ export default function TopUpModal({
               
               {/* Progress Bar */}
               <div className="mt-8">
-                <div className="w-full bg-white/10 backdrop-blur-sm rounded-full h-2 border border-white/20">
+                <div className="w-full bg-white/20 backdrop-blur-sm rounded-full h-2 border border-white/30">
                   <div 
                     className="bg-gradient-to-r from-orange-500 to-green-500 h-2 rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${(loadingStep / 2) * 100}%` }}
@@ -289,7 +293,7 @@ export default function TopUpModal({
               </div>
               
               {/* Summary */}
-              <Card className="bg-white/10 backdrop-blur-sm border border-white/25 rounded-xl p-4 mb-6">
+              <Card className="bg-white/20 backdrop-blur-sm border border-white/35 rounded-xl p-4 mb-6">
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Added to:</span>
@@ -312,6 +316,7 @@ export default function TopUpModal({
             </div>
           )}
         </DialogContent>
+        </DialogPortal>
       </Dialog>
     </>
   );

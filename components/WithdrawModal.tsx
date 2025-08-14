@@ -5,6 +5,8 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
+  DialogOverlay,
+  DialogPortal,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -160,7 +162,9 @@ export default function WithdrawModal({
         <DialogTrigger asChild>
           {children}
         </DialogTrigger>
-        <DialogContent className="bg-white/20 backdrop-blur-2xl border border-white/30 shadow-2xl max-w-md rounded-2xl backdrop-saturate-150">
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 z-50 bg-black/0 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <DialogContent className="bg-white/90 backdrop-blur-3xl backdrop-brightness-125 border border-white/100 shadow-2xl max-w-md rounded-2xl backdrop-saturate-200 fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 p-6 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]">
           {currentStep === "confirm" && (
             <div className="p-2">
               <div className="text-center mb-6">
@@ -184,7 +188,7 @@ export default function WithdrawModal({
 
               <div className="space-y-4">
                 {/* Plan Summary */}
-                <Card className="bg-white/10 backdrop-blur-sm border border-white/25 rounded-xl p-4">
+                <Card className="bg-white/20 backdrop-blur-sm border border-white/35 rounded-xl p-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Plan Name:</span>
@@ -207,24 +211,24 @@ export default function WithdrawModal({
 
                 {/* Early Withdrawal Warning */}
                 {!isMatured && (
-                  <Card className="bg-red-50/20 backdrop-blur-sm border border-red-200/40 rounded-xl p-4 shake">
+                  <Card className="bg-red-50/30 backdrop-blur-sm border border-red-200/50 rounded-xl p-4 shake">
                     <div className="flex items-start gap-3">
                       <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                       <div className="space-y-2">
-                        <h3 className="text-red-200 font-semibold">Early Withdrawal Penalty</h3>
-                        <ul className="text-red-100 text-sm space-y-1">
+                        <h3 className="text-red-700 font-semibold">Early Withdrawal Penalty</h3>
+                        <ul className="text-red-600 text-sm space-y-1">
                           <li>• You will lose {penaltyPercentage}% of your savings</li>
                           <li>• You will forfeit any potential rewards that would have been earned at maturity</li>
                         </ul>
                         
-                        <div className="mt-3 pt-3 border-t border-red-200/40">
+                        <div className="mt-3 pt-3 border-t border-red-200/50">
                           <div className="flex justify-between text-sm">
-                            <span className="text-red-300">Penalty Amount:</span>
-                            <span className="text-red-200 font-semibold">-${calculatePenalty()} {tokenSymbol}</span>
+                            <span className="text-red-600">Penalty Amount:</span>
+                            <span className="text-red-700 font-semibold">-${calculatePenalty()} {tokenSymbol}</span>
                           </div>
                           <div className="flex justify-between text-sm font-bold mt-1">
-                            <span className="text-red-300">You'll Receive:</span>
-                            <span className="text-red-200">${calculateNetAmount()} {tokenSymbol}</span>
+                            <span className="text-red-600">You'll Receive:</span>
+                            <span className="text-red-700">${calculateNetAmount()} {tokenSymbol}</span>
                           </div>
                         </div>
                       </div>
@@ -234,12 +238,12 @@ export default function WithdrawModal({
 
                 {/* Matured Plan Success */}
                 {isMatured && (
-                  <Card className="bg-green-50/20 backdrop-blur-sm border border-green-200/40 rounded-xl p-4">
+                  <Card className="bg-green-50/30 backdrop-blur-sm border border-green-200/50 rounded-xl p-4">
                     <div className="flex items-center gap-3">
                       <Check className="w-5 h-5 text-green-600" />
                       <div>
-                        <h3 className="text-green-200 font-semibold">Plan Matured Successfully!</h3>
-                        <p className="text-green-100 text-sm">No penalties apply. You can withdraw the full amount.</p>
+                        <h3 className="text-green-700 font-semibold">Plan Matured Successfully!</h3>
+                        <p className="text-green-600 text-sm">No penalties apply. You can withdraw the full amount.</p>
                       </div>
                     </div>
                   </Card>
@@ -250,7 +254,7 @@ export default function WithdrawModal({
                   <Button 
                     variant="outline"
                     onClick={handleClose}
-                    className="flex-1 bg-white/10 backdrop-blur-sm border-white/30 hover:bg-white/20 text-gray-800"
+                    className="flex-1 bg-white/20 backdrop-blur-sm border-white/40 hover:bg-white/30 text-gray-800"
                   >
                     Cancel
                   </Button>
@@ -289,7 +293,7 @@ export default function WithdrawModal({
               
               {/* Progress Bar */}
               <div className="mt-8">
-                <div className="w-full bg-white/10 backdrop-blur-sm border border-white/20 rounded-full h-2">
+                <div className="w-full bg-white/20 backdrop-blur-sm border border-white/30 rounded-full h-2">
                   <div 
                     className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-3000 ease-out"
                     style={{ width: '100%' }}
@@ -321,7 +325,7 @@ export default function WithdrawModal({
               </div>
               
               {/* Summary */}
-              <Card className="bg-white/10 backdrop-blur-sm border border-white/25 rounded-xl p-4 mb-6">
+              <Card className="bg-white/20 backdrop-blur-sm border border-white/35 rounded-xl p-4 mb-6">
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Plan:</span>
@@ -367,6 +371,7 @@ export default function WithdrawModal({
             </div>
           )}
         </DialogContent>
+        </DialogPortal>
       </Dialog>
     </>
   );
