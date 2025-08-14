@@ -4,7 +4,9 @@ import { TrendingUp } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import sdk from "@farcaster/miniapp-sdk";
+import type { MiniAppSDK } from "@farcaster/miniapp-sdk/dist/types";
 import SavingsPlanDetailsPage from "./SavingsPlanDetailsPage";
 
 // Mock interface for UI development
@@ -26,8 +28,16 @@ export default function HomePage({
 }: {
   setCurrentTab: (tab: any) => void;
 }) {
-  const [selectedSaving, setSelectedSaving] = useState<MockSavingDetails | null>(null);
+  const [selectedSaving, setSelectedSaving] =
+    useState<MockSavingDetails | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [userContext, setUserContext] = useState<Awaited<
+    MiniAppSDK["context"]
+  > | null>(null);
+
+  useEffect(() => {
+    if (!userContext) (async () => setUserContext(await sdk.context))();
+  }, []);
 
   // Mock data for the home page savings plans
   const mockHomeSavings: MockSavingDetails[] = [
@@ -41,7 +51,7 @@ export default function HomePage({
       interestFormatted: "23.8",
       penaltyPercentage: 5,
       isActive: true,
-      isMatured: false
+      isMatured: false,
     },
     {
       name: "Emergency Fund",
@@ -53,8 +63,8 @@ export default function HomePage({
       interestFormatted: "48.0",
       penaltyPercentage: 3,
       isActive: true,
-      isMatured: false
-    }
+      isMatured: false,
+    },
   ];
 
   const handleCardClick = (saving: MockSavingDetails) => {
@@ -69,7 +79,7 @@ export default function HomePage({
 
   if (showDetails) {
     return (
-      <SavingsPlanDetailsPage 
+      <SavingsPlanDetailsPage
         savingDetails={selectedSaving}
         setCurrentTab={setCurrentTab}
         onBack={handleBackFromDetails}
@@ -89,7 +99,7 @@ export default function HomePage({
             transform: translateY(0);
           }
         }
-        
+
         @keyframes fadeIn {
           0% {
             opacity: 0;
@@ -98,7 +108,7 @@ export default function HomePage({
             opacity: 1;
           }
         }
-        
+
         @keyframes fadeInUp {
           0% {
             opacity: 0;
@@ -118,26 +128,26 @@ export default function HomePage({
             className="flex items-center gap-2 mb-8 mt-4 bg-white rounded-full cursor-pointer animate-fade-in-down shadow-lg"
             onClick={() => setCurrentTab("settings")}
             style={{
-              animation: "fadeInDown 0.3s ease-out"
+              animation: "fadeInDown 0.3s ease-out",
             }}
           >
             <Avatar className="w-[1.5rem] h-[1.5rem] ml-[0.15rem]">
-              <AvatarImage src="/placeholder.svg?height=40&width=40" />
+              <AvatarImage src={userContext?.user.pfpUrl} />
               <AvatarFallback className="bg-orange-500 text-white">
-                JD
+                {userContext?.user?.displayName?.at(0) || "U"}
               </AvatarFallback>
             </Avatar>
             <span className="text-black font-medium text-xs my-2 mr-2">
-              Joan Dawson
+              {userContext?.user.username}
             </span>
           </div>
         </div>
 
         {/* Total Savings */}
-        <div 
+        <div
           className="text-center mb-8"
           style={{
-            animation: "fadeIn 1s ease-out 0.3s both"
+            animation: "fadeIn 1s ease-out 0.3s both",
           }}
         >
           <p className="text-gray-600 text-sm mb-2">Total savings</p>
@@ -151,7 +161,9 @@ export default function HomePage({
         {/* Saving Plans */}
         <div className="px-4">
           <div className="flex items-center justify-between">
-            <h1 className="font-bold pb-2 pl-4 text-black">Active Saving Plans</h1>
+            <h1 className="font-bold pb-2 pl-4 text-black">
+              Active Saving Plans
+            </h1>
             <button
               className="pr-4 text-black"
               onClick={() => setCurrentTab("vaults")}
@@ -160,11 +172,11 @@ export default function HomePage({
             </button>
           </div>
           {mockHomeSavings.map((saving, index) => (
-            <Card 
+            <Card
               key={index}
               className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 mb-6 shadow-lg cursor-pointer hover:bg-white/15 transition-all duration-300 transform hover:scale-105"
               style={{
-                animation: `fadeInUp 0.3s ease-out ${0.3 + index * 0.1}s both`
+                animation: `fadeInUp 0.3s ease-out ${0.3 + index * 0.1}s both`,
               }}
               onClick={() => handleCardClick(saving)}
             >
@@ -173,7 +185,9 @@ export default function HomePage({
                   <h3 className="text-gray-800 font-medium mb-1">
                     {saving.name}
                   </h3>
-                  <p className="text-gray-700 text-sm">{saving.amountFormatted} {saving.tokenId}</p>
+                  <p className="text-gray-700 text-sm">
+                    {saving.amountFormatted} {saving.tokenId}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="bg-orange-100/80 backdrop-blur-sm rounded-lg flex items-center justify-center border border-orange-200/50">
@@ -183,14 +197,20 @@ export default function HomePage({
                   </div>
                 </div>
               </div>
-              <Progress 
-                value={Math.min(((Date.now() / 1000 - saving.startTime) / (saving.maturityTime - saving.startTime)) * 100, 100)} 
-                className="h-2 bg-white/20 backdrop-blur-sm border border-white/30" 
+              <Progress
+                value={Math.min(
+                  ((Date.now() / 1000 - saving.startTime) /
+                    (saving.maturityTime - saving.startTime)) *
+                    100,
+                  100
+                )}
+                className="h-2 bg-white/20 backdrop-blur-sm border border-white/30"
               />
               <div className="flex justify-between pt-2">
                 <span></span>
                 <span className="text-xs text-green-600">
-                  Matures: {new Date(saving.maturityTime * 1000).toLocaleDateString()}
+                  Matures:{" "}
+                  {new Date(saving.maturityTime * 1000).toLocaleDateString()}
                 </span>
               </div>
             </Card>
