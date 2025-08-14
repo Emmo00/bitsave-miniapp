@@ -17,8 +17,8 @@ import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import TopUpModal from "@/components/TopUpModal";
-import WithdrawModal from "@/components/WithdrawModal";
+import TopUpModal from "@/components/modals/TopUpModal";
+import WithdrawModal from "@/components/modals/WithdrawModal";
 
 // Mock interface for UI development
 interface MockSavingDetails {

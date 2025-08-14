@@ -5,8 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "../ui/button";
 import { useState } from "react";
 import SavingsPlanDetailsPage from "./SavingsPlanDetailsPage";
-import TopUpModal from "@/components/TopUpModal";
-import WithdrawModal from "@/components/WithdrawModal";
+import TopUpModal from "@/components/modals/TopUpModal";
+import WithdrawModal from "@/components/modals/WithdrawModal";
 
 // vaults = "saving plans"
 
