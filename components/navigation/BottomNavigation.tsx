@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Home, TrendingUp, Plus, User, PiggyBank } from "lucide-react";
 

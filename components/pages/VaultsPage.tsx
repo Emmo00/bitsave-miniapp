@@ -1,3 +1,5 @@
+"use client";
+
 import { ChevronDown, Plus, TrendingUp, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";

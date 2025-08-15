@@ -1,3 +1,5 @@
+"use client";
+
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
 import {
@@ -22,15 +24,8 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { config } from "@/components/providers/WagmiProvider";
 import { getChainName, getSupportedTokens } from "@/lib/tokenUtils";
-import { Calendar } from "@/components/ui/calendar";
 import { parseDate } from "chrono-node";
-import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { useSwitchChain } from "wagmi";
 
 export default function CreatePlanPage({
@@ -57,8 +52,11 @@ export default function CreatePlanPage({
   useEffect(() => {
     setIsClient(true);
     const now = new Date();
-    setCurrentDate(now);
-    setFormData((prev) => ({ ...prev, maturityDate: now }));
+    // Set minimum date to one month from now
+    const oneMonthFromNow = new Date(now);
+    oneMonthFromNow.setMonth(now.getMonth() + 1);
+    setCurrentDate(oneMonthFromNow);
+    setFormData((prev) => ({ ...prev, maturityDate: oneMonthFromNow }));
   }, []);
 
   const loadingSteps = [
@@ -180,6 +178,13 @@ export default function CreatePlanPage({
         .celebrate {
           animation: celebrate 0.8s ease-in-out;
         }
+
+        /* Custom calendar styling */
+        .calendar-glassmorphism {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
       `}</style>
       <div className="pt-[10vh] text-black">
         {currentStep === "form" && (
@@ -296,33 +301,120 @@ export default function CreatePlanPage({
               <Label className="text-xs font-grotesk text-gray-800">
                 Maturity Time
               </Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-between rounded-xl bg-white/30 backdrop-blur-sm border-white/40 hover:bg-white/40"
-                  >
-                    <span className="text-gray-700">
-                      {isClient && currentDate
-                        ? format(currentDate, "MMM dd, yyyy")
-                        : "Loading..."}
-                    </span>
-                    <CalendarIcon className="w-4 h-4 text-gray-700" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    animate={true}
-                    selected={isClient ? currentDate : undefined}
-                    onSelect={(date) => {
-                      if (date) {
-                        // Handle date selection
+              <div className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-xl p-4">
+                {/* Date Display */}
+                <div className="text-center mb-4">
+                  <div className="text-lg font-semibold text-gray-800">
+                    {isClient && currentDate
+                      ? format(currentDate, "MMMM dd, yyyy")
+                      : "Loading..."}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {isClient && currentDate
+                      ? format(currentDate, "EEEE")
+                      : ""}
+                  </div>
+                </div>
+                
+                {/* Month/Year Selector */}
+                <div className="flex justify-between items-center mb-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (currentDate) {
+                        const newDate = new Date(currentDate);
+                        newDate.setMonth(newDate.getMonth() - 1);
+                        const today = new Date();
+                        const oneMonthFromNow = new Date(today);
+                        oneMonthFromNow.setMonth(today.getMonth() + 1);
+                        if (newDate >= oneMonthFromNow) {
+                          setCurrentDate(newDate);
+                          setFormData({ ...formData, maturityDate: newDate });
+                        }
                       }
                     }}
+                    className="p-2 rounded-lg bg-white/40 border border-white/50 hover:bg-white/60 transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4 text-gray-700" />
+                  </button>
+                  
+                  <div className="text-center">
+                    <div className="text-base font-medium text-gray-800">
+                      {isClient && currentDate ? format(currentDate, "MMMM yyyy") : ""}
+                    </div>
+                  </div>
+                  
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (currentDate) {
+                        const newDate = new Date(currentDate);
+                        newDate.setMonth(newDate.getMonth() + 1);
+                        setCurrentDate(newDate);
+                        setFormData({ ...formData, maturityDate: newDate });
+                      }
+                    }}
+                    className="p-2 rounded-lg bg-white/40 border border-white/50 hover:bg-white/60 transition-colors"
+                  >
+                    <ArrowRight className="w-4 h-4 text-gray-700" />
+                  </button>
+                </div>
+
+                {/* Quick Date Options */}
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-gray-700 mb-2">Quick Select:</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: "1 Month", months: 1 },
+                      { label: "3 Months", months: 3 },
+                      { label: "6 Months", months: 6 },
+                      { label: "1 Year", months: 12 },
+                    ].map((option) => (
+                      <button
+                        key={option.label}
+                        type="button"
+                        onClick={() => {
+                          const today = new Date();
+                          const newDate = new Date(today);
+                          newDate.setMonth(today.getMonth() + option.months);
+                          setCurrentDate(newDate);
+                          setFormData({ ...formData, maturityDate: newDate });
+                        }}
+                        className="py-2 px-3 text-sm rounded-lg bg-white/40 border border-white/50 hover:bg-orange-500/80 hover:text-white transition-all duration-200 text-gray-700"
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom Date Input */}
+                <div className="mt-4 pt-4 border-t border-white/40">
+                  <div className="text-xs font-medium text-gray-700 mb-2">Or choose specific date:</div>
+                  <input
+                    type="date"
+                    value={isClient && currentDate ? format(currentDate, "yyyy-MM-dd") : ""}
+                    onChange={(e) => {
+                      const selectedDate = new Date(e.target.value);
+                      const today = new Date();
+                      const oneMonthFromNow = new Date(today);
+                      oneMonthFromNow.setMonth(today.getMonth() + 1);
+                      
+                      if (selectedDate >= oneMonthFromNow) {
+                        setCurrentDate(selectedDate);
+                        setFormData({ ...formData, maturityDate: selectedDate });
+                      }
+                    }}
+                    min={(() => {
+                      const today = new Date();
+                      const oneMonthFromNow = new Date(today);
+                      oneMonthFromNow.setMonth(today.getMonth() + 1);
+                      return format(oneMonthFromNow, "yyyy-MM-dd");
+                    })()}
+                    className="w-full p-2 rounded-lg bg-white/40 border border-white/50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                   />
-                </PopoverContent>
-              </Popover>
+                </div>
+              </div>
             </div>
 
             {/* Penalty fee */}
@@ -422,7 +514,9 @@ export default function CreatePlanPage({
                 <div className="flex justify-between items-center">
                   <span className="text-gray-700 text-sm">Maturity Date:</span>
                   <span className="text-gray-800 font-medium">
-                    {format(formData.maturityDate, "MMM dd, yyyy")}
+                    {formData.maturityDate
+                      ? format(formData.maturityDate, "MMM dd, yyyy")
+                      : "Not set"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -439,7 +533,10 @@ export default function CreatePlanPage({
               <p className="text-orange-800 text-sm font-medium">
                 You're creating a savings plan that will help you reach your
                 goal of ${formData.amount || "1000"} by{" "}
-                {format(formData.maturityDate, "MMM yyyy")}!
+                {formData.maturityDate
+                  ? format(formData.maturityDate, "MMM yyyy")
+                  : "your target date"}
+                !
               </p>
             </div>
 
@@ -571,7 +668,9 @@ export default function CreatePlanPage({
                   <div className="flex justify-between">
                     <span className="text-gray-600">Maturity Date:</span>
                     <span className="text-gray-800 font-medium">
-                      {format(formData.maturityDate, "MMM dd, yyyy")}
+                      {formData.maturityDate
+                        ? format(formData.maturityDate, "MMM dd, yyyy")
+                        : "Not set"}
                     </span>
                   </div>
                 </div>
@@ -604,7 +703,12 @@ export default function CreatePlanPage({
                       selectedChain: config.chains[0].id.toString(),
                       selectedToken:
                         getSupportedTokens("BASE")[0].address || "",
-                      maturityDate: currentDate,
+                      maturityDate: (() => {
+                        const now = new Date();
+                        const oneMonth = new Date(now);
+                        oneMonth.setMonth(now.getMonth() + 1);
+                        return oneMonth;
+                      })(),
                       penaltyFee: "",
                     });
                   }}
