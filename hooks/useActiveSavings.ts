@@ -42,43 +42,47 @@ export function useSavings(account: Hex) {
     return allSavings;
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const vaultAddresses = await getUserVaultAddresses();
-        const allSavings = await getAllSavingPlans(vaultAddresses);
-        console.log("all savings", allSavings);
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const vaultAddresses = await getUserVaultAddresses();
+      const allSavings = await getAllSavingPlans(vaultAddresses);
+      console.log("all savings", allSavings);
 
-        setSavings(
-          allSavings.map((plan) => ({
-            name: plan.name,
-            amount: plan.amount,
-            formattedAmount: formatUnits(
+      setSavings(
+        allSavings.map((plan) => ({
+          name: plan.name,
+          amount: plan.amount,
+          formattedAmount: formatUnits(
+            plan.amount,
+            getCoinFromTokenAddress(plan.tokenId)!.decimals
+          ),
+          amountInDollar: Number(
+            formatUnits(
               plan.amount,
               getCoinFromTokenAddress(plan.tokenId)!.decimals
-            ),
-            amountInDollar: Number(
-              formatUnits(
-                plan.amount,
-                getCoinFromTokenAddress(plan.tokenId)!.decimals
-              )
-            ),
-            isWithdrawn: !plan.isValid,
-            startTime: Number(plan.startTime),
-            penaltyPercentage: Number(plan.penaltyPercentage),
-            maturityTime: Number(plan.maturityTime),
-            token: getCoinFromTokenAddress(plan.tokenId)!,
-          }))
-        );
-      } catch (error) {
-        setError(error as string);
-      } finally {
-        console.log("Fetching savings data completed");
-        setIsLoading(false);
-      }
-    };
+            )
+          ),
+          isWithdrawn: !plan.isValid,
+          startTime: Number(plan.startTime),
+          penaltyPercentage: Number(plan.penaltyPercentage),
+          maturityTime: Number(plan.maturityTime),
+          token: getCoinFromTokenAddress(plan.tokenId)!,
+        }))
+      );
+    } catch (error) {
+      setError(error as string);
+    } finally {
+      console.log("Fetching savings data completed");
+      setIsLoading(false);
+    }
+  };
 
+  async function refetch() {
+    await fetchData();
+  }
+
+  useEffect(() => {
     fetchData();
   }, [account]);
 
@@ -103,5 +107,6 @@ export function useSavings(account: Hex) {
     activeSavings,
     withdrawnSavings,
     error,
+    refetch,
   };
 }

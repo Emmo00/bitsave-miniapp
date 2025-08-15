@@ -43,6 +43,9 @@ import { useWriteContract, useTransactionConfirmations } from "wagmi";
 import CONTRACT_ADDRESSES from "@/constants/addresses";
 import { useToast } from "@/hooks/useToast";
 import { useConnect } from "wagmi";
+import sdk from "@farcaster/miniapp-sdk";
+import { APP_URL } from "@/lib/constants";
+import { useSavings } from "@/hooks/useActiveSavings";
 
 export default function CreatePlanPage({
   setCurrentTab,
@@ -76,6 +79,7 @@ export default function CreatePlanPage({
   const [hasAlreadyJoinedBitsave, setHasAlreadyJoinedBitsave] = useState(false);
   const { error: showErrorToast } = useToast();
   const { connect, connectors } = useConnect();
+  const { refetch: refetchSavings } = useSavings(address!);
 
   // Wagmi hooks
   const { writeContractAsync: writeJoinBitsaveContract } = useWriteContract();
@@ -494,6 +498,7 @@ export default function CreatePlanPage({
 
       // Small delay before showing success
       setTimeout(() => {
+        refetchSavings();
         setCurrentStep("success");
       }, 1000);
     } catch (error: any) {
@@ -540,20 +545,13 @@ export default function CreatePlanPage({
     });
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     const shareText = `I just created a savings plan on BitSave! 💰 Saving $${formData.amount || "1000"} for ${formData.name || "my goal"}. Join me in building better financial habits! 🚀`;
 
-    if (navigator.share) {
-      navigator.share({
-        title: "My BitSave Savings Plan",
-        text: shareText,
-        url: window.location.href,
-      });
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(shareText);
-      alert("Share text copied to clipboard!");
-    }
+    await sdk.actions.composeCast({
+      text: shareText,
+      embeds: [APP_URL],
+    });
   };
 
   return (
@@ -1238,7 +1236,7 @@ export default function CreatePlanPage({
                   className="w-full bg-blue-500/80 backdrop-blur-sm border border-blue-400/50 hover:bg-blue-600/80 text-white"
                 >
                   <Share2 className="w-4 h-4 mr-2" />
-                  Share to Social Media
+                  Share to Farcaster
                 </Button>
                 <Button
                   onClick={() => setCurrentTab("home")}
