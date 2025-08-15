@@ -30,7 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useSwitchChain, useAccount } from "wagmi";
 import { readContract } from "@wagmi/core";
-import { formatUnits, Address, zeroAddress, parseUnits } from "viem";
+import { formatUnits, Address, zeroAddress, parseUnits, BaseError } from "viem";
 import ERC20_ABI from "@/abi/ERC20.json";
 import BITSAVE_ABI from "@/abi/BitSave.json";
 import {
@@ -41,6 +41,8 @@ import {
 import { ChainId } from "@/types";
 import { useWriteContract, useTransactionConfirmations } from "wagmi";
 import CONTRACT_ADDRESSES from "@/constants/addresses";
+import { useToast } from "@/hooks/useToast";
+import { useConnect } from "wagmi";
 
 export default function CreatePlanPage({
   setCurrentTab,
@@ -72,6 +74,8 @@ export default function CreatePlanPage({
   const { switchChain } = useSwitchChain();
   const { address } = useAccount();
   const [hasAlreadyJoinedBitsave, setHasAlreadyJoinedBitsave] = useState(false);
+  const { error: showErrorToast } = useToast();
+  const { connect, connectors } = useConnect();
 
   // Wagmi hooks
   const {
@@ -110,9 +114,15 @@ export default function CreatePlanPage({
       const tokenInfo = getTokenInfo(tokenAddress);
       const formattedBalance = formatUnits(balance, tokenInfo.decimals);
       setTokenBalance(formattedBalance);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching balance:", error);
       setTokenBalance("0");
+      // Only show toast for critical balance fetch errors, not on initial load
+      if (formData.selectedToken && formData.selectedChain) {
+        if (error?.message?.includes("network")) {
+          showErrorToast("Network Error", "Failed to fetch wallet balance");
+        }
+      }
     } finally {
       setIsLoadingBalance(false);
     }
@@ -122,17 +132,31 @@ export default function CreatePlanPage({
     // track chain, and check if user has joined bitsave on that chain
     if (formData.selectedChain) {
       (async () => {
-        const userContract = await getUserChildContract(
-          address!,
-          Number(formData.selectedChain) as ChainId
-        );
-        setHasAlreadyJoinedBitsave(!(userContract === zeroAddress));
-        console.log("Checking if user has joined Bitsave", {
-          userContract,
-          selectedChain: formData.selectedChain,
-          address,
-          hasAlreadyJoinedBitsave,
-        });
+        try {
+          const userContract = await getUserChildContract(
+            address!,
+            Number(formData.selectedChain) as ChainId
+          );
+          setHasAlreadyJoinedBitsave(!(userContract === zeroAddress));
+          console.log("Checking if user has joined Bitsave", {
+            userContract,
+            selectedChain: formData.selectedChain,
+            address,
+            hasAlreadyJoinedBitsave,
+          });
+        } catch (error: any) {
+          console.error("Error checking BitSave membership:", error);
+          // Assume user hasn't joined if we can't check
+          setHasAlreadyJoinedBitsave(false);
+
+          // Only show error if it's a critical network issue
+          if (error?.message?.includes("network")) {
+            showErrorToast(
+              "Network Error",
+              "Could not verify BitSave membership"
+            );
+          }
+        }
       })();
     }
   }, [formData.selectedChain, address]);
@@ -290,6 +314,30 @@ export default function CreatePlanPage({
     }
 
     if (hasErrors) {
+      // Show toast for critical errors
+      if (
+        newErrors.amount &&
+        newErrors.amount.includes("Insufficient balance")
+      ) {
+        showErrorToast(
+          "Insufficient Balance",
+          "Add more tokens to your wallet"
+        );
+      } else if (
+        newErrors.maturityDate &&
+        newErrors.maturityDate.includes("least one month")
+      ) {
+        showErrorToast(
+          "Invalid Date",
+          "Maturity date must be at least one month away"
+        );
+      } else if (
+        newErrors.penaltyFee &&
+        parseFloat(formData.penaltyFee) > 100
+      ) {
+        showErrorToast("Invalid Penalty", "Penalty fee cannot exceed 100%");
+      }
+
       // scroll to top if name or amount has errors
       if (newErrors.name || newErrors.amount) {
         window.scroll({ top: 0, behavior: "smooth" });
@@ -307,7 +355,11 @@ export default function CreatePlanPage({
   };
 
   const handleSave = async () => {
-    if (!address) return;
+    if (!address) {
+      showErrorToast("Connecting Wallet", "Please try again.");
+      connect({ connector: connectors[0] });
+      return;
+    }
 
     setCurrentStep("loading");
     setLoadingStep(0);
@@ -320,69 +372,130 @@ export default function CreatePlanPage({
       // Step 1: Join BitSave if not already joined
       if (!hasAlreadyJoinedBitsave) {
         setLoadingStep(1);
-        const joiningFee = await getJoiningFee(chainId);
+        try {
+          const joiningFee = await getJoiningFee(chainId);
 
-        const joinBitsaveHash = await writeJoinBitsaveContract({
-          abi: BITSAVE_ABI,
-          address: CONTRACT_ADDRESSES[chainId].BITSAVE as Address,
-          functionName: "joinBitsave",
-          chainId,
-          value: joiningFee,
-        });
+          const joinBitsaveHash = await writeJoinBitsaveContract({
+            abi: BITSAVE_ABI,
+            address: CONTRACT_ADDRESSES[chainId].BITSAVE as Address,
+            functionName: "joinBitsave",
+            chainId,
+            value: joiningFee,
+          });
 
-        // Wait for 1 confirmation
-        await waitForConfirmations(joinBitsaveHash, 1);
+          // Wait for 1 confirmation
+          await waitForConfirmations(joinBitsaveHash, 1);
+        } catch (error: any) {
+          console.error("Join BitSave error:", error);
+          showErrorToast(
+            "Join Failed",
+            (error as BaseError).shortMessage ||
+              error.message ||
+              "Failed to join BitSave. Please try again."
+          );
+          setCurrentStep("form");
+          return;
+        }
       }
 
       // Step 2: Approve token transfer
       const approveStepId = hasAlreadyJoinedBitsave ? 1 : 2;
       setLoadingStep(approveStepId);
 
-      const createSavingsFee = await getCreateSavingsFee(chainId);
-      const totalAmount = amount + createSavingsFee;
+      try {
+        const createSavingsFee = await getCreateSavingsFee(chainId);
+        const totalAmount = amount + createSavingsFee;
 
-      const approveHash = await writeApproveTokenSpendContract({
-        abi: ERC20_ABI,
-        address: formData.selectedToken as Address,
-        functionName: "approve",
-        args: [
-          CONTRACT_ADDRESSES[getChainName(chainId).toUpperCase()]
-            .BITSAVE as Address,
-          totalAmount,
-        ],
-        chainId,
-      });
+        const approveHash = await writeApproveTokenSpendContract({
+          abi: ERC20_ABI,
+          address: formData.selectedToken as Address,
+          functionName: "approve",
+          args: [
+            CONTRACT_ADDRESSES[getChainName(chainId).toUpperCase()]
+              .BITSAVE as Address,
+            totalAmount,
+          ],
+          chainId,
+        });
 
-      // Wait for 1 confirmation
-      await waitForConfirmations(approveHash, 1);
+        // Wait for 1 confirmation
+        await waitForConfirmations(approveHash, 1);
+      } catch (error: any) {
+        console.error("Token approval error:", error);
+        if (error?.message?.includes("insufficient")) {
+          showErrorToast(
+            "Insufficient Funds",
+            "Not enough tokens in your wallet"
+          );
+        } else if (error?.message?.includes("rejected")) {
+          showErrorToast(
+            "Transaction Rejected",
+            "You rejected the approval transaction"
+          );
+        } else {
+          showErrorToast(
+            "Approval Failed",
+            (error as BaseError).shortMessage ||
+              error.message ||
+              "Failed to approve token spending"
+          );
+        }
+        setCurrentStep("form");
+        return;
+      }
 
       // Step 3: Create savings plan
       const createStepId = hasAlreadyJoinedBitsave ? 2 : 3;
       setLoadingStep(createStepId);
 
-      // Convert maturity date to timestamp
-      const maturityTimestamp = Math.floor(
-        (formData.maturityDate?.getTime() || Date.now()) / 1000
-      );
+      try {
+        // Convert maturity date to timestamp
+        const maturityTimestamp = Math.floor(
+          (formData.maturityDate?.getTime() || Date.now()) / 1000
+        );
 
-      const createSavingHash = await writeCreateSavingsContract({
-        abi: BITSAVE_ABI,
-        address: CONTRACT_ADDRESSES[chainId].BITSAVE as Address,
-        functionName: "createSaving",
-        args: [
-          formData.name,
-          maturityTimestamp,
-          Number(formData.penaltyFee),
-          false, // safeMode
-          formData.selectedToken as Address,
-          amount,
-        ],
-        chainId,
-        value: createSavingsFee,
-      });
+        const createSavingsFee = await getCreateSavingsFee(chainId);
+        const createSavingHash = await writeCreateSavingsContract({
+          abi: BITSAVE_ABI,
+          address: CONTRACT_ADDRESSES[chainId].BITSAVE as Address,
+          functionName: "createSaving",
+          args: [
+            formData.name,
+            maturityTimestamp,
+            Number(formData.penaltyFee),
+            false, // safeMode
+            formData.selectedToken as Address,
+            amount,
+          ],
+          chainId,
+          value: createSavingsFee,
+        });
 
-      // Wait for 2 confirmations
-      await waitForConfirmations(createSavingHash, 2);
+        // Wait for 2 confirmations
+        await waitForConfirmations(createSavingHash, 2);
+      } catch (error: any) {
+        console.error("Create savings error:", error);
+        if (error?.message?.includes("insufficient")) {
+          showErrorToast(
+            "Insufficient ETH",
+            "Not enough ETH for transaction fees"
+          );
+        } else if (error?.message?.includes("rejected")) {
+          showErrorToast(
+            "Transaction Rejected",
+            "You rejected the create savings transaction"
+          );
+        } else {
+          showErrorToast(
+            "Creation Failed",
+            (error as BaseError).shortMessage ||
+              error.message ||
+              "Failed to create savings plan"
+          );
+        }
+        setCurrentStep("form");
+        return;
+      }
 
       // Final step
       const finalStepId = hasAlreadyJoinedBitsave ? 3 : 4;
@@ -392,9 +505,26 @@ export default function CreatePlanPage({
       setTimeout(() => {
         setCurrentStep("success");
       }, 1000);
-    } catch (error) {
-      console.error("Error creating savings plan:", error);
-      // Handle error - could show error state or go back to form
+    } catch (error: any) {
+      console.error("Unexpected error creating savings plan:", error);
+
+      // Handle network errors
+      if (error?.message?.includes("network")) {
+        showErrorToast(
+          "Network Error",
+          "Please check your internet connection"
+        );
+      } else if (error?.message?.includes("chain")) {
+        showErrorToast("Wrong Network", "Please switch to the correct network");
+      } else {
+        showErrorToast(
+          "Something Went Wrong",
+          (error as BaseError).shortMessage ||
+            error.message ||
+            "Please try again later"
+        );
+      }
+
       setCurrentStep("form");
     }
   };

@@ -39,38 +39,43 @@ export function Toast({ toast, onClose }: ToastProps) {
     switch (type) {
       case "success":
         return {
-          icon: <CheckCircle className="w-5 h-5 text-green-600" />,
-          bgColor: "bg-green-50 border-green-200",
-          textColor: "text-green-800",
-          titleColor: "text-green-900",
+          icon: <CheckCircle className="w-5 h-5 text-green-400" />,
+          bgColor: "bg-green-500/20 backdrop-blur-md border-green-400/30",
+          textColor: "text-green-100",
+          titleColor: "text-green-50",
+          accentColor: "border-l-green-400",
         };
       case "error":
         return {
-          icon: <XCircle className="w-5 h-5 text-red-600" />,
-          bgColor: "bg-red-50 border-red-200",
-          textColor: "text-red-800",
-          titleColor: "text-red-900",
+          icon: <XCircle className="w-5 h-5 text-red-400" />,
+          bgColor: "bg-red-500/20 backdrop-blur-md border-red-400/30",
+          textColor: "text-red-100",
+          titleColor: "text-red-50",
+          accentColor: "border-l-red-400",
         };
       case "warning":
         return {
-          icon: <AlertTriangle className="w-5 h-5 text-yellow-600" />,
-          bgColor: "bg-yellow-50 border-yellow-200",
-          textColor: "text-yellow-800",
-          titleColor: "text-yellow-900",
+          icon: <AlertTriangle className="w-5 h-5 text-yellow-400" />,
+          bgColor: "bg-yellow-500/20 backdrop-blur-md border-yellow-400/30",
+          textColor: "text-yellow-100",
+          titleColor: "text-yellow-50",
+          accentColor: "border-l-yellow-400",
         };
       case "info":
         return {
-          icon: <Info className="w-5 h-5 text-blue-600" />,
-          bgColor: "bg-blue-50 border-blue-200",
-          textColor: "text-blue-800",
-          titleColor: "text-blue-900",
+          icon: <Info className="w-5 h-5 text-blue-400" />,
+          bgColor: "bg-blue-500/20 backdrop-blur-md border-blue-400/30",
+          textColor: "text-blue-100",
+          titleColor: "text-blue-50",
+          accentColor: "border-l-blue-400",
         };
       default:
         return {
-          icon: <Info className="w-5 h-5 text-gray-600" />,
-          bgColor: "bg-gray-50 border-gray-200",
-          textColor: "text-gray-800",
-          titleColor: "text-gray-900",
+          icon: <Info className="w-5 h-5 text-gray-400" />,
+          bgColor: "bg-white/20 backdrop-blur-md border-white/30",
+          textColor: "text-gray-100",
+          titleColor: "text-gray-50",
+          accentColor: "border-l-gray-400",
         };
     }
   };
@@ -80,7 +85,7 @@ export function Toast({ toast, onClose }: ToastProps) {
   return (
     <div
       className={`
-        max-w-sm w-full ${style.bgColor} border rounded-lg shadow-lg p-4 pointer-events-auto
+        max-w-sm w-full ${style.bgColor} border ${style.accentColor} border-l-4 rounded-lg shadow-2xl p-4 pointer-events-auto
         transform transition-all duration-300 ease-in-out
         ${
           isVisible && !isLeaving
@@ -98,10 +103,10 @@ export function Toast({ toast, onClose }: ToastProps) {
           {toast.message && <p className={`text-sm mt-1 ${style.textColor}`}>{toast.message}</p>}
         </div>
         <Button
-          variant="secondary"
+          variant="ghost"
           size="icon"
           onClick={handleClose}
-          className="flex-shrink-0 h-6 w-6 rounded-full hover:bg-white/20 -mr-1 -mt-1"
+          className="flex-shrink-0 h-6 w-6 rounded-full hover:bg-white/20 -mr-1 -mt-1 text-white/70 hover:text-white"
         >
           <X className="w-4 h-4" />
         </Button>
