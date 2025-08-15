@@ -54,6 +54,10 @@ export function useSavings(account: Hex) {
           allSavings.map((plan) => ({
             name: plan.name,
             amount: plan.amount,
+            formattedAmount: formatUnits(
+              plan.amount,
+              getCoinFromTokenAddress(plan.tokenId)!.decimals
+            ),
             amountInDollar: Number(
               formatUnits(
                 plan.amount,
