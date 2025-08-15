@@ -1,4 +1,5 @@
 import CONTRACT_ADDRESSES, { Stablecoin } from "../constants/addresses";
+import { config } from "@/components/providers/WagmiProvider";
 import { formatUnits } from "viem";
 
 export interface TokenInfo {
@@ -6,6 +7,11 @@ export interface TokenInfo {
   image: string | null;
   name: string;
   decimals: number;
+}
+
+export function getChainName(chainId: number): string {
+  const chain = config.chains.find((c) => c.id === chainId);
+  return chain ? chain.name : "Unknown Chain";
 }
 
 /**
@@ -18,9 +24,10 @@ export function getTokenInfo(tokenId: string): TokenInfo {
   // Search through all networks for matching token address
   for (const [network, addresses] of Object.entries(CONTRACT_ADDRESSES)) {
     const stablecoin = addresses.STABLECOINS.find(
-      (coin: Stablecoin) => coin.address?.toLowerCase() === tokenId.toLowerCase()
+      (coin: Stablecoin) =>
+        coin.address?.toLowerCase() === tokenId.toLowerCase()
     );
-    
+
     if (stablecoin) {
       // Extract symbol from name
       let symbol = stablecoin.name;
@@ -32,17 +39,17 @@ export function getTokenInfo(tokenId: string): TokenInfo {
         symbol,
         image: stablecoin.image,
         name: stablecoin.name,
-        decimals: stablecoin.decimals
+        decimals: stablecoin.decimals,
       };
     }
   }
 
   // Fallback for unknown tokens - this shouldn't happen in normal usage
-  return { 
-    symbol: "UNKNOWN", 
-    image: null, 
+  return {
+    symbol: "UNKNOWN",
+    image: null,
     name: "Unknown Token",
-    decimals: 18
+    decimals: 18,
   };
 }
 

@@ -13,11 +13,24 @@ export async function getJoiningFee(chainId: ChainId = config.state.chainId) {
   const result = (await readContract(config, {
     abi: BITSAVE_ABI,
     address: CONTRACT_ADDRESSES[chainId].BITSAVE as Address,
-    functionName: "getJoiningFee",
+    functionName: "JoinLimitFee",
     chainId,
-  })) as { fee: bigint };
+  })) as bigint;
 
-  return result.fee;
+  return result;
+}
+
+export async function getCreateSavingsFee(
+  chainId: ChainId = config.state.chainId
+) {
+  const result = (await readContract(config, {
+    abi: BITSAVE_ABI,
+    address: CONTRACT_ADDRESSES[chainId].BITSAVE as Address,
+    functionName: "SavingFee",
+    chainId,
+  })) as bigint;
+
+  return result;
 }
 
 export async function getAllUserChildContractsFromAnyChain(

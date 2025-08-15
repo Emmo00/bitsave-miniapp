@@ -9,53 +9,71 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@radix-ui/react-label";
-import { ArrowRight, ArrowLeft, ArrowUpRight, X, Check, Share2, ExternalLink } from "lucide-react";
+import {
+  ArrowRight,
+  ArrowLeft,
+  ArrowUpRight,
+  X,
+  Check,
+  Share2,
+  ExternalLink,
+} from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-
 import { config } from "@/components/providers/WagmiProvider";
-import { getSupportedTokens } from "@/lib/tokenUtils";
+import { getChainName, getSupportedTokens } from "@/lib/tokenUtils";
 import { Calendar } from "@/components/ui/calendar";
 import { parseDate } from "chrono-node";
 import { CalendarIcon } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useSwitchChain } from "wagmi";
 
 export default function CreatePlanPage({
   setCurrentTab,
 }: {
   setCurrentTab: (tab: any) => void;
 }) {
-  const [currentStep, setCurrentStep] = useState<"form" | "preview" | "loading" | "success">("form");
+  const [currentStep, setCurrentStep] = useState<
+    "form" | "preview" | "loading" | "success"
+  >("form");
   const [loadingStep, setLoadingStep] = useState(0);
   const [isClient, setIsClient] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date>();
   const [formData, setFormData] = useState({
-    planName: "",
-    planAmount: "",
+    name: "",
+    amount: "",
     selectedChain: config.chains[0].id.toString(),
     selectedToken: getSupportedTokens("BASE")[0].address || "",
     maturityDate: null as Date | null,
     penaltyFee: "",
   });
+  const { switchChain } = useSwitchChain();
 
   useEffect(() => {
     setIsClient(true);
     const now = new Date();
     setCurrentDate(now);
-    setFormData(prev => ({ ...prev, maturityDate: now }));
+    setFormData((prev) => ({ ...prev, maturityDate: now }));
   }, []);
 
   const loadingSteps = [
     { id: 1, title: "Join Bitsave", description: "Setting up your account..." },
-    { id: 2, title: "Approve Token Send", description: "Approving token transfer..." },
-    { id: 3, title: "Create Savings Plan", description: "Creating your savings plan..." },
-    { id: 4, title: "Finalizing", description: "Completing setup..." }
+    {
+      id: 2,
+      title: "Approve Token Send",
+      description: "Approving token transfer...",
+    },
+    {
+      id: 3,
+      title: "Create Savings Plan",
+      description: "Creating your savings plan...",
+    },
+    { id: 4, title: "Finalizing", description: "Completing setup..." },
   ];
 
   const handleNext = () => {
@@ -70,11 +88,11 @@ export default function CreatePlanPage({
   const handleSave = () => {
     setCurrentStep("loading");
     setLoadingStep(0);
-    
+
     // Simulate the loading process
     const simulateLoading = async () => {
       for (let i = 1; i <= 4; i++) {
-        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay for each step
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 second delay for each step
         setLoadingStep(i);
       }
       // After all steps complete, show success
@@ -82,23 +100,23 @@ export default function CreatePlanPage({
         setCurrentStep("success");
       }, 500);
     };
-    
+
     simulateLoading();
   };
 
   const handleShare = () => {
-    const shareText = `I just created a savings plan on BitSave! 💰 Saving $${formData.planAmount || "1000"} for ${formData.planName || "my goal"}. Join me in building better financial habits! 🚀`;
-    
+    const shareText = `I just created a savings plan on BitSave! 💰 Saving $${formData.amount || "1000"} for ${formData.name || "my goal"}. Join me in building better financial habits! 🚀`;
+
     if (navigator.share) {
       navigator.share({
-        title: 'My BitSave Savings Plan',
+        title: "My BitSave Savings Plan",
         text: shareText,
         url: window.location.href,
       });
     } else {
       // Fallback: copy to clipboard
       navigator.clipboard.writeText(shareText);
-      alert('Share text copied to clipboard!');
+      alert("Share text copied to clipboard!");
     }
   };
 
@@ -115,16 +133,17 @@ export default function CreatePlanPage({
             transform: translateY(0);
           }
         }
-        
+
         @keyframes pulse {
-          0%, 100% {
+          0%,
+          100% {
             opacity: 1;
           }
           50% {
             opacity: 0.5;
           }
         }
-        
+
         @keyframes checkmark {
           0% {
             opacity: 0;
@@ -135,322 +154,37 @@ export default function CreatePlanPage({
             transform: scale(1);
           }
         }
-        
+
         @keyframes celebrate {
-          0%, 100% {
+          0%,
+          100% {
             transform: scale(1);
           }
           50% {
             transform: scale(1.1);
           }
         }
-        
+
         .slide-up {
           animation: slideUpFromBottom 0.3s ease-out;
         }
-        
+
         .pulse {
           animation: pulse 1.5s ease-in-out infinite;
         }
-        
+
         .checkmark {
           animation: checkmark 0.5s ease-out;
         }
-        
+
         .celebrate {
           animation: celebrate 0.8s ease-in-out;
         }
       `}</style>
       <div className="pt-[10vh] text-black">
         {currentStep === "form" && (
-        <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl slide-up">
-        <div className="flex justify-end">
-          <button
-            type="button"
-            aria-label="Close"
-            className="p-2 rounded-full hover:bg-white/20 backdrop-blur-sm border border-white/30 transition-all duration-200"
-            onClick={() => setCurrentTab("home")}
-          >
-            <X className="w-4 h-4 text-gray-800" />
-          </button>
-        </div>
-        {/* Name */}
-        <div className="mb-1">
-          <Label htmlFor="plan-name" className="text-xs font-grotesk text-gray-800">
-            Plan Name
-          </Label>
-          <Input 
-            id="plan-name" 
-            placeholder="Emergency Fund" 
-            className="bg-white/30 backdrop-blur-sm border-white/40" 
-            value={formData.planName}
-            onChange={(e) => setFormData({...formData, planName: e.target.value})}
-          />
-        </div>
-
-        {/* Amount */}
-        <div className="mb-1">
-          <Label htmlFor="plan-amount" className="text-xs font-grotesk text-gray-800">
-            Plan Amount ($)
-          </Label>
-          <Input 
-            id="plan-amount" 
-            type="number" 
-            placeholder="1000" 
-            className="bg-white/30 backdrop-blur-sm border-white/40" 
-            value={formData.planAmount}
-            onChange={(e) => setFormData({...formData, planAmount: e.target.value})}
-          />
-        </div>
-
-        {/* Chain */}
-        <div className="mb-1">
-          <Label className="text-gray-800">Chain</Label>
-          <Select 
-            value={formData.selectedChain}
-            onValueChange={(value) => setFormData({...formData, selectedChain: value})}
-          >
-            <SelectTrigger className="rounded-xl bg-white/30 backdrop-blur-sm border-white/40">
-              <SelectValue placeholder="Select network" />
-            </SelectTrigger>
-            <SelectContent>
-              {config.chains.map((chain) => (
-                <SelectItem key={chain.id} value={chain.id.toString()}>
-                  {chain.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* currency */}
-        <div className="mb-1">
-          <Label className="text-gray-800">Currency</Label>
-          <Select 
-            value={formData.selectedToken}
-            onValueChange={(value) => setFormData({...formData, selectedToken: value})}
-          >
-            <SelectTrigger className="rounded-xl bg-white/30 backdrop-blur-sm border-white/40">
-              <SelectValue placeholder="Select token" />
-            </SelectTrigger>
-            <SelectContent>
-              {getSupportedTokens("BASE").map((token) => (
-                <SelectItem key={token.address} value={token.address || ""}>
-                  <div className="flex items-center space-x-2">
-                    {token.image && (
-                      <Image
-                        src={`/${token.image}`}
-                        alt={token.name}
-                        width={16}
-                        height={16}
-                        className="rounded-full"
-                      />
-                    )}
-                    <span>{token.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Maturity time */}
-        <div className="mb-1">
-          <Label className="text-xs font-grotesk text-gray-800">Maturity Time</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-between rounded-xl bg-white/30 backdrop-blur-sm border-white/40 hover:bg-white/40"
-              >
-                <span className="text-gray-700">
-                  {isClient && currentDate ? format(currentDate, "MMM dd, yyyy") : "Loading..."}
-                </span>
-                <CalendarIcon className="w-4 h-4 text-gray-700" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={isClient ? currentDate : undefined}
-                onSelect={(date) => {
-                  if (date) {
-                    // Handle date selection
-                  }
-                }}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        {/* Penalty fee */}
-        <div className="mb-1">
-          <Label htmlFor="penalty-fee" className="text-xs font-grotesk text-gray-800">
-            Penalty Fee (%)
-          </Label>
-          <Input 
-            id="penalty-fee" 
-            type="number" 
-            placeholder="5" 
-            className="bg-white/30 backdrop-blur-sm border-white/40" 
-            value={formData.penaltyFee}
-            onChange={(e) => setFormData({...formData, penaltyFee: e.target.value})}
-          />
-        </div>
-
-        {/* Action - next, cancel */}
-        <div className="flex flex-col gap-2 justify-center space-x-2 mt-16">
-          <Button onClick={handleNext} className="bg-orange-500/80 backdrop-blur-sm border border-orange-400/50 hover:bg-orange-600/80">
-            Next <ArrowRight className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" className="border-none bg-white/20 backdrop-blur-sm hover:bg-white/30 text-gray-800" onClick={() => setCurrentTab("home")}>
-            Cancel
-          </Button>
-        </div>
-      </div>
-        )}
-        
-        {currentStep === "preview" && (
-        <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl slide-up">
-          <div className="flex items-center justify-between mb-6">
-            <button
-              type="button"
-              aria-label="Back"
-              className="p-2 rounded-full hover:bg-white/20 backdrop-blur-sm border border-white/30 transition-all duration-200"
-              onClick={handleBack}
-            >
-              <ArrowLeft className="w-4 h-4 text-gray-800" />
-            </button>
-            <h2 className="text-lg font-semibold text-gray-800">Preview Plan</h2>
-            <button
-              type="button"
-              aria-label="Close"
-              className="p-2 rounded-full hover:bg-white/20 backdrop-blur-sm border border-white/30 transition-all duration-200"
-              onClick={() => setCurrentTab("home")}
-            >
-              <X className="w-4 h-4 text-gray-800" />
-            </button>
-          </div>
-          
-          {/* Preview Card */}
-          <div className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-2xl p-6 mb-6">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700 text-sm">Plan Name:</span>
-                <span className="text-gray-800 font-medium">{formData.planName || "Emergency Fund"}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700 text-sm">Target Amount:</span>
-                <span className="text-gray-800 font-medium">${formData.planAmount || "1000"}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700 text-sm">Chain:</span>
-                <span className="text-gray-800 font-medium">
-                  {config.chains.find(chain => chain.id.toString() === formData.selectedChain)?.name || "Base"}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700 text-sm">Currency:</span>
-                <span className="text-gray-800 font-medium">
-                  {getSupportedTokens("BASE").find(token => token.address === formData.selectedToken)?.name || "USDC"}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700 text-sm">Maturity Date:</span>
-                <span className="text-gray-800 font-medium">
-                  {format(formData.maturityDate, "MMM dd, yyyy")}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700 text-sm">Penalty Fee:</span>
-                <span className="text-gray-800 font-medium">{formData.penaltyFee || "5"}%</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Summary */}
-          <div className="bg-gradient-to-r from-orange-100/50 to-orange-200/50 backdrop-blur-sm border border-orange-200/40 rounded-xl p-4 mb-8">
-            <p className="text-orange-800 text-sm font-medium">
-              You're creating a savings plan that will help you reach your goal of ${formData.planAmount || "1000"} by {format(formData.maturityDate, "MMM yyyy")}!
-            </p>
-          </div>
-          
-          {/* Action Buttons */}
-          <div className="flex flex-col gap-3 mt-8">
-            <Button 
-              onClick={handleSave} 
-              className="bg-green-500/80 backdrop-blur-sm border border-green-400/50 hover:bg-green-600/80 text-white"
-            >
-              Save Now ✨
-            </Button>
-            <Button 
-              variant="outline" 
-              className="border-none bg-white/20 backdrop-blur-sm hover:bg-white/30 text-gray-800" 
-              onClick={handleBack}
-            >
-              Back to Edit
-            </Button>
-          </div>
-        </div>
-        )}
-        
-        {currentStep === "loading" && (
-        <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl slide-up">
-          <div className="flex justify-center mb-8">
-            <h2 className="text-xl font-semibold text-gray-800">Creating Your Savings Plan</h2>
-          </div>
-          
-          {/* Loading Steps */}
-          <div className="space-y-6 max-w-md mx-auto">
-            {loadingSteps.map((step, index) => (
-              <div key={step.id} className="flex items-center space-x-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
-                  loadingStep >= step.id 
-                    ? 'bg-green-500/80 border-green-400 text-white' 
-                    : loadingStep === step.id - 1
-                    ? 'bg-orange-500/80 border-orange-400 text-white pulse'
-                    : 'bg-white/30 border-white/40 text-gray-600'
-                }`}>
-                  {loadingStep >= step.id ? (
-                    <Check className="w-6 h-6 checkmark" />
-                  ) : (
-                    <span className="text-sm font-semibold">{step.id}</span>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <h3 className={`font-medium transition-colors duration-500 ${
-                    loadingStep >= step.id ? 'text-green-700' : 'text-gray-700'
-                  }`}>
-                    {step.title}
-                  </h3>
-                  <p className="text-sm text-gray-600">{step.description}</p>
-                </div>
-                {loadingStep === step.id - 1 && (
-                  <div className="w-4 h-4 bg-orange-500 rounded-full pulse"></div>
-                )}
-              </div>
-            ))}
-          </div>
-          
-          {/* Progress Bar */}
-          <div className="mt-12">
-            <div className="w-full bg-white/30 rounded-full h-2 backdrop-blur-sm">
-              <div 
-                className="bg-gradient-to-r from-orange-500 to-green-500 h-2 rounded-full transition-all duration-1000 ease-out"
-                style={{ width: `${(loadingStep / 4) * 100}%` }}
-              ></div>
-            </div>
-            <p className="text-center text-sm text-gray-600 mt-3">
-              Step {loadingStep} of 4 completed
-            </p>
-          </div>
-        </div>
-        )}
-        
-        {currentStep === "success" && (
-        <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl slide-up">
-          <div className="text-center">
-            <div className="flex justify-end mb-4">
+          <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl slide-up">
+            <div className="flex justify-end">
               <button
                 type="button"
                 aria-label="Close"
@@ -460,73 +194,426 @@ export default function CreatePlanPage({
                 <X className="w-4 h-4 text-gray-800" />
               </button>
             </div>
-            
-            {/* Success Animation */}
-            <div className="mb-8">
-              <div className="w-24 h-24 mx-auto bg-green-500/80 rounded-full flex items-center justify-center mb-6 celebrate">
-                <Check className="w-12 h-12 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Success! 🎉</h2>
-              <p className="text-gray-700">Your savings plan has been created successfully!</p>
+            {/* Name */}
+            <div className="mb-1">
+              <Label
+                htmlFor="plan-name"
+                className="text-xs font-grotesk text-gray-800"
+              >
+                Name
+              </Label>
+              <Input
+                id="plan-name"
+                placeholder="Emergency Fund"
+                className="bg-white/30 backdrop-blur-sm border-white/40"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+              />
             </div>
-            
-            {/* Plan Summary */}
-            <div className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-2xl p-6 mb-8">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Your New Savings Plan</h3>
-              <div className="space-y-3 text-left">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Plan Name:</span>
-                  <span className="text-gray-800 font-medium">{formData.planName || "Emergency Fund"}</span>
+
+            {/* Amount */}
+            <div className="mb-1">
+              <Label
+                htmlFor="plan-amount"
+                className="text-xs font-grotesk text-gray-800"
+              >
+                Amount ($)
+              </Label>
+              <Input
+                id="plan-amount"
+                type="number"
+                placeholder="1000"
+                className="bg-white/30 backdrop-blur-sm border-white/40"
+                value={formData.amount}
+                onChange={(e) =>
+                  setFormData({ ...formData, amount: e.target.value })
+                }
+              />
+            </div>
+
+            {/* Chain */}
+            <div className="mb-1">
+              <Label className="text-gray-800">Chain</Label>
+              <Select
+                value={formData.selectedChain}
+                onValueChange={(value) => {
+                  switchChain({ chainId: Number(value) });
+                  setFormData({ ...formData, selectedChain: value });
+                }}
+              >
+                <SelectTrigger className="rounded-xl bg-white/30 backdrop-blur-sm border-white/40">
+                  <SelectValue placeholder="Select network" />
+                </SelectTrigger>
+                <SelectContent>
+                  {config.chains.map((chain) => (
+                    <SelectItem key={chain.id} value={chain.id.toString()}>
+                      {chain.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* currency */}
+            <div className="mb-1">
+              <Label className="text-gray-800">Currency</Label>
+              <Select
+                value={formData.selectedToken}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, selectedToken: value })
+                }
+              >
+                <SelectTrigger className="rounded-xl bg-white/30 backdrop-blur-sm border-white/40">
+                  <SelectValue placeholder="Select token" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getSupportedTokens(
+                    getChainName(Number(formData.selectedChain)).toUpperCase()
+                  ).map((token) => (
+                    <SelectItem key={token.address} value={token.address || ""}>
+                      <div className="flex items-center space-x-2">
+                        {token.image && (
+                          <Image
+                            src={`/${token.image}`}
+                            alt={token.name}
+                            width={16}
+                            height={16}
+                            className="rounded-full"
+                          />
+                        )}
+                        <span>{token.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Maturity time */}
+            <div className="mb-1">
+              <Label className="text-xs font-grotesk text-gray-800">
+                Maturity Time
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between rounded-xl bg-white/30 backdrop-blur-sm border-white/40 hover:bg-white/40"
+                  >
+                    <span className="text-gray-700">
+                      {isClient && currentDate
+                        ? format(currentDate, "MMM dd, yyyy")
+                        : "Loading..."}
+                    </span>
+                    <CalendarIcon className="w-4 h-4 text-gray-700" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    animate={true}
+                    selected={isClient ? currentDate : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        // Handle date selection
+                      }
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Penalty fee */}
+            <div className="mb-1">
+              <Label
+                htmlFor="penalty-fee"
+                className="text-xs font-grotesk text-gray-800"
+              >
+                Penalty Fee (%)
+              </Label>
+              <Input
+                id="penalty-fee"
+                type="number"
+                placeholder="5"
+                className="bg-white/30 backdrop-blur-sm border-white/40"
+                value={formData.penaltyFee}
+                onChange={(e) =>
+                  setFormData({ ...formData, penaltyFee: e.target.value })
+                }
+              />
+            </div>
+
+            {/* Action - next, cancel */}
+            <div className="flex flex-col gap-2 justify-center space-x-2 mt-16">
+              <Button
+                onClick={handleNext}
+                className="bg-orange-500/80 backdrop-blur-sm border border-orange-400/50 hover:bg-orange-600/80"
+              >
+                Next <ArrowRight className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="border-none bg-white/20 backdrop-blur-sm hover:bg-white/30 text-gray-800"
+                onClick={() => setCurrentTab("home")}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === "preview" && (
+          <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl slide-up">
+            <div className="flex items-center justify-between mb-6">
+              <button
+                type="button"
+                aria-label="Back"
+                className="p-2 rounded-full hover:bg-white/20 backdrop-blur-sm border border-white/30 transition-all duration-200"
+                onClick={handleBack}
+              >
+                <ArrowLeft className="w-4 h-4 text-gray-800" />
+              </button>
+              <h2 className="text-lg font-semibold text-gray-800">
+                Preview Plan
+              </h2>
+              <button
+                type="button"
+                aria-label="Close"
+                className="p-2 rounded-full hover:bg-white/20 backdrop-blur-sm border border-white/30 transition-all duration-200"
+                onClick={() => setCurrentTab("home")}
+              >
+                <X className="w-4 h-4 text-gray-800" />
+              </button>
+            </div>
+
+            {/* Preview Card */}
+            <div className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-2xl p-6 mb-6">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700 text-sm">Name:</span>
+                  <span className="text-gray-800 font-medium">
+                    {formData.name || "Emergency Fund"}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Target Amount:</span>
-                  <span className="text-gray-800 font-medium">${formData.planAmount || "1000"}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700 text-sm">Target Amount:</span>
+                  <span className="text-gray-800 font-medium">
+                    ${formData.amount || "1000"}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Maturity Date:</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700 text-sm">Chain:</span>
+                  <span className="text-gray-800 font-medium">
+                    {config.chains.find(
+                      (chain) => chain.id.toString() === formData.selectedChain
+                    )?.name || "Base"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700 text-sm">Currency:</span>
+                  <span className="text-gray-800 font-medium">
+                    {getSupportedTokens("BASE").find(
+                      (token) => token.address === formData.selectedToken
+                    )?.name || "USDC"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700 text-sm">Maturity Date:</span>
                   <span className="text-gray-800 font-medium">
                     {format(formData.maturityDate, "MMM dd, yyyy")}
                   </span>
                 </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700 text-sm">Penalty Fee:</span>
+                  <span className="text-gray-800 font-medium">
+                    {formData.penaltyFee || "5"}%
+                  </span>
+                </div>
               </div>
             </div>
-            
+
+            {/* Summary */}
+            <div className="bg-gradient-to-r from-orange-100/50 to-orange-200/50 backdrop-blur-sm border border-orange-200/40 rounded-xl p-4 mb-8">
+              <p className="text-orange-800 text-sm font-medium">
+                You're creating a savings plan that will help you reach your
+                goal of ${formData.amount || "1000"} by{" "}
+                {format(formData.maturityDate, "MMM yyyy")}!
+              </p>
+            </div>
+
             {/* Action Buttons */}
-            <div className="space-y-3">
-              <Button 
-                onClick={handleShare} 
-                className="w-full bg-blue-500/80 backdrop-blur-sm border border-blue-400/50 hover:bg-blue-600/80 text-white"
+            <div className="flex flex-col gap-3 mt-8">
+              <Button
+                onClick={handleSave}
+                className="bg-green-500/80 backdrop-blur-sm border border-green-400/50 hover:bg-green-600/80 text-white"
               >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share to Social Media
+                Save Now ✨
               </Button>
-              <Button 
-                onClick={() => setCurrentTab("home")} 
-                className="w-full bg-orange-500/80 backdrop-blur-sm border border-orange-400/50 hover:bg-orange-600/80 text-white"
+              <Button
+                variant="outline"
+                className="border-none bg-white/20 backdrop-blur-sm hover:bg-white/30 text-gray-800"
+                onClick={handleBack}
               >
-                View My Savings Plans
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full border-none bg-white/20 backdrop-blur-sm hover:bg-white/30 text-gray-800" 
-                onClick={() => {
-                  setCurrentStep("form");
-                  setLoadingStep(0);
-                  setFormData({
-                    planName: "",
-                    planAmount: "",
-                    selectedChain: config.chains[0].id.toString(),
-                    selectedToken: getSupportedTokens("BASE")[0].address || "",
-                    maturityDate: currentDate,
-                    penaltyFee: "",
-                  });
-                }}
-              >
-                Create Another Plan
+                Back to Edit
               </Button>
             </div>
           </div>
-        </div>
+        )}
+
+        {currentStep === "loading" && (
+          <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl slide-up">
+            <div className="flex justify-center mb-8">
+              <h2 className="text-xl font-semibold text-gray-800">
+                Creating Your Savings Plan
+              </h2>
+            </div>
+
+            {/* Loading Steps */}
+            <div className="space-y-6 max-w-md mx-auto">
+              {loadingSteps.map((step, index) => (
+                <div key={step.id} className="flex items-center space-x-4">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
+                      loadingStep >= step.id
+                        ? "bg-green-500/80 border-green-400 text-white"
+                        : loadingStep === step.id - 1
+                          ? "bg-orange-500/80 border-orange-400 text-white pulse"
+                          : "bg-white/30 border-white/40 text-gray-600"
+                    }`}
+                  >
+                    {loadingStep >= step.id ? (
+                      <Check className="w-6 h-6 checkmark" />
+                    ) : (
+                      <span className="text-sm font-semibold">{step.id}</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3
+                      className={`font-medium transition-colors duration-500 ${
+                        loadingStep >= step.id
+                          ? "text-green-700"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      {step.title}
+                    </h3>
+                    <p className="text-sm text-gray-600">{step.description}</p>
+                  </div>
+                  {loadingStep === step.id - 1 && (
+                    <div className="w-4 h-4 bg-orange-500 rounded-full pulse"></div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mt-12">
+              <div className="w-full bg-white/30 rounded-full h-2 backdrop-blur-sm">
+                <div
+                  className="bg-gradient-to-r from-orange-500 to-green-500 h-2 rounded-full transition-all duration-1000 ease-out"
+                  style={{ width: `${(loadingStep / 4) * 100}%` }}
+                ></div>
+              </div>
+              <p className="text-center text-sm text-gray-600 mt-3">
+                Step {loadingStep} of 4 completed
+              </p>
+            </div>
+          </div>
+        )}
+
+        {currentStep === "success" && (
+          <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl slide-up">
+            <div className="text-center">
+              <div className="flex justify-end mb-4">
+                <button
+                  type="button"
+                  aria-label="Close"
+                  className="p-2 rounded-full hover:bg-white/20 backdrop-blur-sm border border-white/30 transition-all duration-200"
+                  onClick={() => setCurrentTab("home")}
+                >
+                  <X className="w-4 h-4 text-gray-800" />
+                </button>
+              </div>
+
+              {/* Success Animation */}
+              <div className="mb-8">
+                <div className="w-24 h-24 mx-auto bg-green-500/80 rounded-full flex items-center justify-center mb-6 celebrate">
+                  <Check className="w-12 h-12 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  Success! 🎉
+                </h2>
+                <p className="text-gray-700">
+                  Your savings plan has been created successfully!
+                </p>
+              </div>
+
+              {/* Plan Summary */}
+              <div className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-2xl p-6 mb-8">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  Your New Savings Plan
+                </h3>
+                <div className="space-y-3 text-left">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Name:</span>
+                    <span className="text-gray-800 font-medium">
+                      {formData.name || "Emergency Fund"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Target Amount:</span>
+                    <span className="text-gray-800 font-medium">
+                      ${formData.amount || "1000"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Maturity Date:</span>
+                    <span className="text-gray-800 font-medium">
+                      {format(formData.maturityDate, "MMM dd, yyyy")}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <Button
+                  onClick={handleShare}
+                  className="w-full bg-blue-500/80 backdrop-blur-sm border border-blue-400/50 hover:bg-blue-600/80 text-white"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share to Social Media
+                </Button>
+                <Button
+                  onClick={() => setCurrentTab("home")}
+                  className="w-full bg-orange-500/80 backdrop-blur-sm border border-orange-400/50 hover:bg-orange-600/80 text-white"
+                >
+                  View My Savings Plans
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full border-none bg-white/20 backdrop-blur-sm hover:bg-white/30 text-gray-800"
+                  onClick={() => {
+                    setCurrentStep("form");
+                    setLoadingStep(0);
+                    setFormData({
+                      name: "",
+                      amount: "",
+                      selectedChain: config.chains[0].id.toString(),
+                      selectedToken:
+                        getSupportedTokens("BASE")[0].address || "",
+                      maturityDate: currentDate,
+                      penaltyFee: "",
+                    });
+                  }}
+                >
+                  Create Another Plan
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </>

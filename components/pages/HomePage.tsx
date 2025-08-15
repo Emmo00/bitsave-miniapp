@@ -42,6 +42,12 @@ export default function HomePage({
   } = useSavings(address!);
 
   useEffect(() => {
+    // Automatically connect to wallet if not connected
+    setTimeout(() => {
+      console.log("Connecting to wallet...");
+      connect({ connector: connectors[0] });
+    }, 1000);
+
     setIsClient(true);
     const now = Math.floor(Date.now() / 1000);
     setCurrentTime(now);
