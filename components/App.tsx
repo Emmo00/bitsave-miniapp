@@ -7,12 +7,29 @@ import HomePage from "@/components/pages/HomePage";
 import CreatePlanPage from "@/components/pages/CreatePlanPage";
 import BottomNavigation from "@/components/navigation/BottomNavigation";
 import VaultsPage from "./pages/VaultsPage";
+import { useAccount, useConnect } from "wagmi";
+import { useSavings } from "@/hooks/useActiveSavings";
 
 export default function App() {
   const params = useParams<{ tab: string }>();
   const [currentTab, setCurrentTab] = useState<
     "home" | "ranking" | "create" | "vaults" | "settings"
   >("home");
+  const { isConnected, address } = useAccount();
+  const { connect, connectors } = useConnect();
+  const { isLoading: isFetchingSavings } = useSavings(address!);
+
+  useEffect(() => {
+    if (isConnected) {
+      // User is connected and address is available
+      console.log("User is connected:", address);
+      return;
+    }
+
+    connect({
+      connector: connectors[0],
+    });
+  }, [isConnected, address]);
 
   useEffect(() => {
     if (params.tab) {
@@ -21,7 +38,10 @@ export default function App() {
   }, [params.tab]);
 
   useEffect(() => {
-    sdk.actions.ready();
+    if (!isFetchingSavings)
+      setTimeout(() => {
+        sdk.actions.ready();
+      }, 0);
   }, []);
 
   return (
@@ -126,7 +146,9 @@ export default function App() {
         {currentTab === "create" && (
           <CreatePlanPage setCurrentTab={setCurrentTab} />
         )}
-        {currentTab === "vaults" && <VaultsPage setCurrentTab={setCurrentTab} />}
+        {currentTab === "vaults" && (
+          <VaultsPage setCurrentTab={setCurrentTab} />
+        )}
 
         {/* Bottom Navigation */}
         <BottomNavigation

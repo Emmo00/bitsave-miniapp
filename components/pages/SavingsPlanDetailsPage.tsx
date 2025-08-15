@@ -20,22 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import TopUpModal from "@/components/modals/TopUpModal";
 import WithdrawModal from "@/components/modals/WithdrawModal";
 
-// Mock interface for UI development
-interface MockSavingDetails {
-  name: string;
-  amountFormatted: string;
-  tokenId: string;
-  startTime: number;
-  maturityTime: number;
-  timeToMaturity: number;
-  interestFormatted: string;
-  penaltyPercentage: number;
-  isActive: boolean;
-  isMatured: boolean;
-}
-
 interface SavingsPlanDetailsPageProps {
-  savingDetails: MockSavingDetails | null;
+  savingDetails: SavingsPlan | null;
   setCurrentTab: (tab: any) => void;
   onBack: () => void;
 }
@@ -75,8 +61,8 @@ export default function SavingsPlanDetailsPage({
           type: 'created',
           timestamp: new Date(savingDetails.startTime * 1000).toISOString(),
           description: 'Savings plan created',
-          amount: savingDetails.amountFormatted,
-          currency: savingDetails.tokenId
+          amount: savingDetails.amount,
+          currency: savingDetails.currency
         },
         {
           id: '2',

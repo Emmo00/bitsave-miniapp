@@ -8,34 +8,36 @@ import { useEffect, useState } from "react";
 import sdk from "@farcaster/miniapp-sdk";
 import type { MiniAppSDK } from "@farcaster/miniapp-sdk/dist/types";
 import SavingsPlanDetailsPage from "./SavingsPlanDetailsPage";
-
-// Mock interface for UI development
-interface MockSavingDetails {
-  name: string;
-  amountFormatted: string;
-  tokenId: string;
-  startTime: number;
-  maturityTime: number;
-  timeToMaturity: number;
-  interestFormatted: string;
-  penaltyPercentage: number;
-  isActive: boolean;
-  isMatured: boolean;
-}
+import { useSavings } from "@/hooks/useActiveSavings";
+import { useAccount, useConnect } from "wagmi";
+import { formatCurrency } from "@/utils";
 
 export default function HomePage({
   setCurrentTab,
 }: {
   setCurrentTab: (tab: any) => void;
 }) {
-  const [selectedSaving, setSelectedSaving] =
-    useState<MockSavingDetails | null>(null);
+  const [selectedSaving, setSelectedSaving] = useState<SavingsPlan | null>(
+    null
+  );
   const [showDetails, setShowDetails] = useState(false);
   const [userContext, setUserContext] = useState<Awaited<
     MiniAppSDK["context"]
   > | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [currentTime, setCurrentTime] = useState<number | null>(null);
+
+  // hook
+  const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+  const {
+    isLoading,
+    totalAmountInSavings,
+    savings,
+    activeSavings,
+    withdrawnSavings,
+    error,
+  } = useSavings(address!);
 
   useEffect(() => {
     setIsClient(true);
@@ -45,37 +47,22 @@ export default function HomePage({
 
   useEffect(() => {
     if (!userContext) (async () => setUserContext(await sdk.context))();
+    console.log("user active savings", activeSavings);
   }, []);
 
-  // Mock data for the home page savings plans
-  const mockHomeSavings: MockSavingDetails[] = [
-    {
-      name: "Apple MacBook Air",
-      amountFormatted: "595",
-      tokenId: "cUSD",
-      startTime: 1656720000, // July 2, 2022
-      maturityTime: 1724371200, // August 23, 2025
-      timeToMaturity: currentTime ? 1724371200 - currentTime : 0,
-      interestFormatted: "23.8",
-      penaltyPercentage: 5,
-      isActive: true,
-      isMatured: false,
-    },
-    {
-      name: "Emergency Fund",
-      amountFormatted: "1200",
-      tokenId: "USDC",
-      startTime: 1672531200, // Jan 1, 2023
-      maturityTime: 1735689600, // Jan 1, 2025
-      timeToMaturity: currentTime ? 1735689600 - currentTime : 0,
-      interestFormatted: "48.0",
-      penaltyPercentage: 3,
-      isActive: true,
-      isMatured: false,
-    },
-  ];
+  useEffect(() => {
+    if (!isConnected) {
+      connect({
+        connector: connectors[0],
+      });
+    }
+  }, [userContext]);
 
-  const handleCardClick = (saving: MockSavingDetails) => {
+  useEffect(() => {
+    console.log("Active saving plans", activeSavings);
+  }, [activeSavings]);
+
+  const handleCardClick = (saving: SavingsPlan) => {
     setSelectedSaving(saving);
     setShowDetails(true);
   };
@@ -151,7 +138,7 @@ export default function HomePage({
           </div>
         </div>
 
-        {/* Total Savings */}
+        {/* Total in Savings */}
         <div
           className="text-center mb-8"
           style={{
@@ -159,7 +146,9 @@ export default function HomePage({
           }}
         >
           <p className="text-gray-600 text-sm mb-2">Total savings</p>
-          <h1 className="text-black text-4xl font-bold mb-1">$3,450.00</h1>
+          <h1 className="text-black text-4xl font-bold mb-1">
+            {formatCurrency(totalAmountInSavings)}
+          </h1>
           <p className="flex justify-center text-black text-xs opacity-70">
             20% since last month{" "}
             <TrendingUp className="w-4 h-4 text-green-500 bg-white rounded-full" />
@@ -179,7 +168,7 @@ export default function HomePage({
               see all
             </button>
           </div>
-          {mockHomeSavings.map((saving, index) => (
+          {activeSavings.map((saving, index) => (
             <Card
               key={index}
               className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 mb-6 shadow-lg cursor-pointer hover:bg-white/15 transition-all duration-300 transform hover:scale-105"
@@ -194,13 +183,14 @@ export default function HomePage({
                     {saving.name}
                   </h3>
                   <p className="text-gray-700 text-sm">
-                    {saving.amountFormatted} {saving.tokenId}
+                    {formatCurrency(saving.amount)} {saving.currency}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="bg-orange-100/80 backdrop-blur-sm rounded-lg flex items-center justify-center border border-orange-200/50">
                     <div className="text-xs py-1 px-2">
-                      <span>{saving.tokenId}</span> on <span>CELO</span>
+                      <span>{saving.currency}</span> on{" "}
+                      <span>{saving.chain}</span>
                     </div>
                   </div>
                 </div>

@@ -1,40 +1,90 @@
-import { useUserSavings, SavingDetails } from "./useUserSavings";
-import { formatTokenAmount } from "../lib/tokenUtils";
+import {
+  getAllUserChildContractsFromAnyChain,
+  getAllUserSavings,
+} from "@/onchain/reads";
+import { useEffect, useState } from "react";
+import { Hex } from "viem";
 
-interface ActiveSavingsData {
-  activeSavings: SavingDetails[];
-  totalActiveSavings: number;
-  totalActiveAmount: string;
-  totalActiveAmountWei: number;
-  totalActiveRewards: string;
-  totalActiveRewardsWei: bigint;
-  isLoading: boolean;
-  error: string | null;
-}
+export function useSavings(account: Hex) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalAmountInSavings, setTotalAmountInSavings] = useState(0);
+  const [savings, setSavings] = useState<SavingsPlan[]>([]);
+  const [activeSavings, setActiveSavings] = useState<SavingsPlan[]>([]);
+  const [withdrawnSavings, setWithdrawnSavings] = useState<SavingsPlan[]>([]);
 
-export function useActiveSavings(): ActiveSavingsData {
-  const { activeSavings, isLoading, error } = useUserSavings();
+  const getUserVaultAddresses = async () => {
+    console.log("user account (address)", account);
 
-  // Calculate totals for active savings with proper USD conversion
-  let totalActiveAmountUsd = 0;
-  
-  activeSavings.forEach(saving => {
-    // Convert token amount to USD equivalent using proper decimals
-    const tokenAmountFormatted = formatTokenAmount(saving.amount, saving.tokenId);
-    const usdValue = parseFloat(tokenAmountFormatted);
-    totalActiveAmountUsd += usdValue;
-  });
+    // Fetch user vault addresses from the blockchain
+    const addresses = await getAllUserChildContractsFromAnyChain(account);
 
-  const totalActiveRewards = activeSavings.reduce((sum, saving) => sum + saving.interestAccumulated, 0n);
+    return addresses;
+  };
+
+  const getAllSavingPlans = async (
+    vaultAddresses: Awaited<ReturnType<typeof getUserVaultAddresses>>
+  ) => {
+    if (!vaultAddresses || vaultAddresses.length === 0) return [];
+
+    const allSavings = [];
+
+    for (const vault of vaultAddresses) {
+      const savingsData = await getAllUserSavings(
+        vault.childContract,
+        vault.chainId
+      );
+      allSavings.push(...savingsData);
+    }
+
+    return allSavings;
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const vaultAddresses = await getUserVaultAddresses();
+        const allSavings = await getAllSavingPlans(vaultAddresses);
+        console.log("all savings", allSavings);
+
+        setSavings(
+          allSavings.map((plan) => ({
+            ...plan,
+            amount: Number(plan.amount),
+            isWithdrawn: !plan.isValid,
+            startTime: Number(plan.startTime),
+            penaltyPercentage: Number(plan.penaltyPercentage),
+            maturityTime: Number(plan.maturityTime),
+          }))
+        );
+        setTotalAmountInSavings(
+          allSavings.reduce((acc, plan) => acc + Number(plan.amount), 0)
+        );
+      } catch (error) {
+        setError(error as string);
+      } finally {
+        console.log("Fetching savings data completed");
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [account]);
+
+  useEffect(() => {
+    const active = savings.filter((plan) => !plan.isWithdrawn);
+    const withdrawn = savings.filter((plan) => plan.isWithdrawn);
+    setActiveSavings(active);
+    setWithdrawnSavings(withdrawn);
+  }, [savings]);
 
   return {
-    activeSavings,
-    totalActiveSavings: activeSavings.length,
-    totalActiveAmount: totalActiveAmountUsd.toFixed(2),
-    totalActiveAmountWei: totalActiveAmountUsd,
-    totalActiveRewards: (parseFloat(totalActiveRewards.toString()) / 1e18).toFixed(6),
-    totalActiveRewardsWei: totalActiveRewards,
     isLoading,
+    totalAmountInSavings,
+    savings,
+    activeSavings,
+    withdrawnSavings,
     error,
   };
 }
