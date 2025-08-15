@@ -54,7 +54,12 @@ export default function SavingsPlanDetailsPage({
     setCurrentTime(now);
   }, []);
 
-  // Mock activities for demonstration - replace with actual data fetching
+    useEffect(() => {
+      // scroll to top
+      window.scroll({ top: 0, behavior: "smooth" });
+  }, []);
+
+
   useEffect(() => {
     if (savingDetails && isClient && currentTime) {
       const mockActivities: ActivityItem[] = [
@@ -110,7 +115,6 @@ export default function SavingsPlanDetailsPage({
   }
 
   const formatTimeRemaining = (timeToMaturity: number) => {
-    console.log("matu time", timeToMaturity);
     if (timeToMaturity <= Date.now() / 1000) return "Matured";
 
     const now = Date.now() / 1000;

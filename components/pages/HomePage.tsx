@@ -147,9 +147,30 @@ export default function HomePage({
           }}
         >
           <p className="text-gray-600 text-sm mb-2">Total savings</p>
-          <h1 className="text-black text-4xl font-bold mb-1">
-            {formatCurrency(totalAmountInSavings)}
-          </h1>
+            <h1 className="text-black text-4xl font-bold mb-1 transition-all duration-500">
+            {isLoading ? (
+              <span
+              style={{
+                opacity: 1,
+                transition: "opacity 0.5s",
+                display: "inline-block",
+              }}
+              >
+              ****
+              </span>
+            ) : (
+              <span
+              style={{
+                opacity: 1,
+                transition: "opacity 0.5s",
+                display: "inline-block",
+                animation: "fadeInUp 0.5s",
+              }}
+              >
+              {formatCurrency(totalAmountInSavings)}
+              </span>
+            )}
+            </h1>
           <p className="flex justify-center text-black text-xs opacity-70">
             20% since last month{" "}
             <TrendingUp className="w-4 h-4 text-green-500 bg-white rounded-full" />
