@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Dialog,
   DialogContent,
@@ -37,11 +37,18 @@ export default function WithdrawModal({
   totalAmount = "100",
   isMatured = false,
   penaltyPercentage = 10,
-  maturityDate = new Date(),
+  maturityDate,
   onWithdraw 
 }: WithdrawModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<"confirm" | "loading" | "success">("confirm");
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const safeMaturityDate = maturityDate || (isClient ? new Date() : null);
 
   const calculatePenalty = () => {
     const amount = parseFloat(totalAmount);
@@ -202,7 +209,7 @@ export default function WithdrawModal({
                       <div className="flex justify-between">
                         <span className="text-gray-600">Maturity Date:</span>
                         <span className="text-gray-800 font-medium">
-                          {maturityDate.toLocaleDateString()}
+                          {safeMaturityDate ? safeMaturityDate.toLocaleDateString() : "Loading..."}
                         </span>
                       </div>
                     )}

@@ -57,10 +57,18 @@ export default function SavingsPlanDetailsPage({
 }: SavingsPlanDetailsPageProps) {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [currentTime, setCurrentTime] = useState<number | null>(null);
+
+  useEffect(() => {
+    setIsClient(true);
+    const now = Math.floor(Date.now() / 1000);
+    setCurrentTime(now);
+  }, []);
 
   // Mock activities for demonstration - replace with actual data fetching
   useEffect(() => {
-    if (savingDetails) {
+    if (savingDetails && isClient && currentTime) {
       const mockActivities: ActivityItem[] = [
         {
           id: '1',
@@ -75,7 +83,7 @@ export default function SavingsPlanDetailsPage({
           type: 'topup',
           amount: '50',
           currency: savingDetails.tokenId,
-          timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          timestamp: new Date((currentTime - 7 * 24 * 60 * 60) * 1000).toISOString(),
           description: 'Top up deposit',
           txHash: '0x1234...5678'
         },
@@ -84,7 +92,7 @@ export default function SavingsPlanDetailsPage({
           type: 'interest',
           amount: savingDetails.interestFormatted,
           currency: savingDetails.tokenId,
-          timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          timestamp: new Date((currentTime - 3 * 24 * 60 * 60) * 1000).toISOString(),
           description: 'Interest earned'
         }
       ];
@@ -92,7 +100,7 @@ export default function SavingsPlanDetailsPage({
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       ));
     }
-  }, [savingDetails]);
+  }, [savingDetails, isClient, currentTime]);
 
   if (!savingDetails) {
     return (
@@ -119,8 +127,9 @@ export default function SavingsPlanDetailsPage({
   };
 
   const getProgressPercentage = () => {
+    if (!isClient || !currentTime) return 0;
     const totalDuration = savingDetails.maturityTime - savingDetails.startTime;
-    const elapsed = Date.now() / 1000 - savingDetails.startTime;
+    const elapsed = currentTime - savingDetails.startTime;
     return Math.min((elapsed / totalDuration) * 100, 100);
   };
 

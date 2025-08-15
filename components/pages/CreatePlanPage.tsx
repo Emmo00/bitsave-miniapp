@@ -33,14 +33,23 @@ export default function CreatePlanPage({
 }) {
   const [currentStep, setCurrentStep] = useState<"form" | "preview" | "loading" | "success">("form");
   const [loadingStep, setLoadingStep] = useState(0);
+  const [isClient, setIsClient] = useState(false);
+  const [currentDate, setCurrentDate] = useState<Date>();
   const [formData, setFormData] = useState({
     planName: "",
     planAmount: "",
     selectedChain: config.chains[0].id.toString(),
     selectedToken: getSupportedTokens("BASE")[0].address || "",
-    maturityDate: new Date(),
+    maturityDate: null as Date | null,
     penaltyFee: "",
   });
+
+  useEffect(() => {
+    setIsClient(true);
+    const now = new Date();
+    setCurrentDate(now);
+    setFormData(prev => ({ ...prev, maturityDate: now }));
+  }, []);
 
   const loadingSteps = [
     { id: 1, title: "Join Bitsave", description: "Setting up your account..." },
@@ -255,7 +264,7 @@ export default function CreatePlanPage({
                 className="w-full justify-between rounded-xl bg-white/30 backdrop-blur-sm border-white/40 hover:bg-white/40"
               >
                 <span className="text-gray-700">
-                  {format(new Date(), "MMM dd, yyyy")}
+                  {isClient && currentDate ? format(currentDate, "MMM dd, yyyy") : "Loading..."}
                 </span>
                 <CalendarIcon className="w-4 h-4 text-gray-700" />
               </Button>
@@ -263,7 +272,7 @@ export default function CreatePlanPage({
             <PopoverContent className="w-auto p-0">
               <Calendar
                 mode="single"
-                selected={new Date()}
+                selected={isClient ? currentDate : undefined}
                 onSelect={(date) => {
                   if (date) {
                     // Handle date selection
@@ -508,7 +517,7 @@ export default function CreatePlanPage({
                     planAmount: "",
                     selectedChain: config.chains[0].id.toString(),
                     selectedToken: getSupportedTokens("BASE")[0].address || "",
-                    maturityDate: new Date(),
+                    maturityDate: currentDate,
                     penaltyFee: "",
                   });
                 }}

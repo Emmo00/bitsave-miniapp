@@ -3,7 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "../ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SavingsPlanDetailsPage from "./SavingsPlanDetailsPage";
 import TopUpModal from "@/components/modals/TopUpModal";
 import WithdrawModal from "@/components/modals/WithdrawModal";
@@ -31,6 +31,14 @@ type Props = {
 export default function VaultsPage({ setCurrentTab }: Props) {
   const [selectedSaving, setSelectedSaving] = useState<MockSavingDetails | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [currentTime, setCurrentTime] = useState<number | null>(null);
+
+  useEffect(() => {
+    setIsClient(true);
+    const now = Math.floor(Date.now() / 1000);
+    setCurrentTime(now);
+  }, []);
 
   // Mock data for UI development
   const mockSavings: MockSavingDetails[] = [
@@ -40,7 +48,7 @@ export default function VaultsPage({ setCurrentTab }: Props) {
       tokenId: "cUSD",
       startTime: 1656720000, // July 2, 2022
       maturityTime: 1724371200, // August 23, 2025
-      timeToMaturity: 1724371200 - Math.floor(Date.now() / 1000),
+      timeToMaturity: currentTime ? 1724371200 - currentTime : 0,
       interestFormatted: "23.8",
       penaltyPercentage: 5,
       isActive: true,
@@ -52,7 +60,7 @@ export default function VaultsPage({ setCurrentTab }: Props) {
       tokenId: "USDC",
       startTime: 1672531200, // Jan 1, 2023
       maturityTime: 1735689600, // Jan 1, 2025
-      timeToMaturity: 1735689600 - Math.floor(Date.now() / 1000),
+      timeToMaturity: currentTime ? 1735689600 - currentTime : 0,
       interestFormatted: "48.0",
       penaltyPercentage: 3,
       isActive: true,
@@ -140,13 +148,17 @@ export default function VaultsPage({ setCurrentTab }: Props) {
               </div>
             </div>
             <Progress
-              value={Math.min(((Date.now() / 1000 - saving.startTime) / (saving.maturityTime - saving.startTime)) * 100, 100)}
+              value={
+                isClient && currentTime
+                  ? Math.min(((currentTime - saving.startTime) / (saving.maturityTime - saving.startTime)) * 100, 100)
+                  : 0
+              }
               className="h-4 bg-white/20 backdrop-blur-sm border border-white/30"
             />
             <div className="flex justify-between pt-2">
               <span></span>
               <span className="text-xs text-green-600">
-                Matures: {new Date(saving.maturityTime * 1000).toLocaleDateString()}
+                Matures: {isClient ? new Date(saving.maturityTime * 1000).toLocaleDateString() : "Loading..."}
               </span>
             </div>
             <div className="flex justify-between">

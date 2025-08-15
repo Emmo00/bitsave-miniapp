@@ -33,10 +33,12 @@ interface ToastProviderProps {
 
 export function ToastProvider({ children }: ToastProviderProps) {
   const [toasts, setToasts] = useState<ToastData[]>([]);
+  const [idCounter, setIdCounter] = useState(0);
 
   const generateId = useCallback(() => {
-    return `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }, []);
+    setIdCounter((prev) => prev + 1);
+    return `toast-${idCounter}`;
+  }, [idCounter]);
 
   const showToast = useCallback(
     (toast: Omit<ToastData, "id">) => {
