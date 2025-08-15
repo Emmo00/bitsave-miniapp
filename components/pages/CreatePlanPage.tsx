@@ -78,21 +78,10 @@ export default function CreatePlanPage({
   const { connect, connectors } = useConnect();
 
   // Wagmi hooks
-  const {
-    data: joinBitsaveHash,
-    writeContractAsync: writeJoinBitsaveContract,
-    isPending: isWriteJoinBitsavePending,
-  } = useWriteContract();
-  const {
-    data: createSavingsHash,
-    writeContractAsync: writeCreateSavingsContract,
-    isPending: isWriteCreateSavingsPending,
-  } = useWriteContract();
-  const {
-    data: approveTokenSpendHash,
-    writeContractAsync: writeApproveTokenSpendContract,
-    isPending: isWriteApproveTokenSpendPending,
-  } = useWriteContract();
+  const { writeContractAsync: writeJoinBitsaveContract } = useWriteContract();
+  const { writeContractAsync: writeCreateSavingsContract } = useWriteContract();
+  const { writeContractAsync: writeApproveTokenSpendContract } =
+    useWriteContract();
 
   // Function to fetch token balance
   const fetchTokenBalance = async (tokenAddress: string, chainId: number) => {
@@ -377,7 +366,8 @@ export default function CreatePlanPage({
 
           const joinBitsaveHash = await writeJoinBitsaveContract({
             abi: BITSAVE_ABI,
-            address: CONTRACT_ADDRESSES[chainId].BITSAVE as Address,
+            address: CONTRACT_ADDRESSES[getChainName(chainId).toUpperCase()]
+              .BITSAVE as Address,
             functionName: "joinBitsave",
             chainId,
             value: joiningFee,
@@ -457,7 +447,8 @@ export default function CreatePlanPage({
         const createSavingsFee = await getCreateSavingsFee(chainId);
         const createSavingHash = await writeCreateSavingsContract({
           abi: BITSAVE_ABI,
-          address: CONTRACT_ADDRESSES[chainId].BITSAVE as Address,
+          address: CONTRACT_ADDRESSES[getChainName(chainId).toUpperCase()]
+            .BITSAVE as Address,
           functionName: "createSaving",
           args: [
             formData.name,
@@ -636,7 +627,10 @@ export default function CreatePlanPage({
       <div className="pt-[10vh] text-black">
         {currentStep === "form" && (
           <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl slide-up">
-            <div className="flex justify-end">
+            <div className="flex justify-between items-center">
+              <h1 className="text-lg font-bold mb-4 text-gray-800">
+                Create Savings Plan{" "}
+              </h1>
               <button
                 type="button"
                 aria-label="Close"

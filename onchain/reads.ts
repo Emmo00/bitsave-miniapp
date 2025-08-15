@@ -6,11 +6,13 @@ import CHILDCONTRACT_ABI from "../abi/ChildContract.json";
 import CONTRACT_ADDRESSES from "../constants/addresses";
 import { Address, Hex, zeroAddress } from "viem";
 import type { ChainId, SupportedChains } from "@/types";
+import { getChainName } from "@/lib/tokenUtils";
 
 export async function getJoiningFee(chainId: ChainId = config.state.chainId) {
   const result = (await readContract(config, {
     abi: BITSAVE_ABI,
-    address: CONTRACT_ADDRESSES[chainId].BITSAVE as Address,
+    address: CONTRACT_ADDRESSES[getChainName(chainId).toUpperCase()]
+      .BITSAVE as Address,
     functionName: "JoinLimitFee",
     chainId,
   })) as bigint;
@@ -23,7 +25,8 @@ export async function getCreateSavingsFee(
 ) {
   const result = (await readContract(config, {
     abi: BITSAVE_ABI,
-    address: CONTRACT_ADDRESSES[chainId].BITSAVE as Address,
+    address: CONTRACT_ADDRESSES[getChainName(chainId).toUpperCase()]
+      .BITSAVE as Address,
     functionName: "SavingFee",
     chainId,
   })) as bigint;
@@ -79,10 +82,8 @@ export async function getUserChildContract(
   userAccount: string,
   chainId: ChainId = config.state.chainId
 ) {
-  const chainName = (config.chains
-    .find((chain) => chain.id === chainId)
-    ?.name.toUpperCase() ?? "BASE") as SupportedChains;
-  let contractAddress = CONTRACT_ADDRESSES[chainName]?.BITSAVE;
+  let contractAddress =
+    CONTRACT_ADDRESSES[getChainName(chainId).toUpperCase()]?.BITSAVE;
   if (!contractAddress) throw new Error("Contract address not found");
 
   return (await readContract(config, {
