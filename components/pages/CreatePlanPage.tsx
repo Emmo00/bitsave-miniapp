@@ -23,10 +23,20 @@ import {
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { config } from "@/components/providers/WagmiProvider";
-import { getChainName, getSupportedTokens } from "@/lib/tokenUtils";
+import {
+  getChainName,
+  getSupportedTokens,
+  getTokenInfo,
+} from "@/lib/tokenUtils";
 import { parseDate } from "chrono-node";
 import { Button } from "@/components/ui/button";
-import { useSwitchChain } from "wagmi";
+import { useSwitchChain, useAccount } from "wagmi";
+import { readContract } from "@wagmi/core";
+import { formatUnits, Address, zeroAddress } from "viem";
+import ERC20_ABI from "@/abi/ERC20.json";
+import { getUserChildContract } from "@/onchain/reads";
+import { ChainId } from "@/types";
+import { useWriteContract, useTransactionConfirmations } from "wagmi";
 
 export default function CreatePlanPage({
   setCurrentTab,
@@ -39,6 +49,14 @@ export default function CreatePlanPage({
   const [loadingStep, setLoadingStep] = useState(0);
   const [isClient, setIsClient] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date>();
+  const [errors, setErrors] = useState({
+    name: "",
+    amount: "",
+    penaltyFee: "",
+    maturityDate: "",
+  });
+  const [tokenBalance, setTokenBalance] = useState<string>("0");
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     amount: "",
@@ -48,6 +66,55 @@ export default function CreatePlanPage({
     penaltyFee: "",
   });
   const { switchChain } = useSwitchChain();
+  const { address } = useAccount();
+  const [hasAlreadyJoinedBitsave, setHasAlreadyJoinedBitsave] = useState(false);
+
+  // Function to fetch token balance
+  const fetchTokenBalance = async (tokenAddress: string, chainId: number) => {
+    if (!address || !tokenAddress) {
+      setTokenBalance("0");
+      return;
+    }
+
+    setIsLoadingBalance(true);
+    try {
+      const balance = (await readContract(config, {
+        abi: ERC20_ABI,
+        address: tokenAddress as Address,
+        functionName: "balanceOf",
+        args: [address],
+        chainId: chainId as any, // Type assertion to handle the chain ID typing
+      })) as bigint;
+
+      const tokenInfo = getTokenInfo(tokenAddress);
+      const formattedBalance = formatUnits(balance, tokenInfo.decimals);
+      setTokenBalance(formattedBalance);
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+      setTokenBalance("0");
+    } finally {
+      setIsLoadingBalance(false);
+    }
+  };
+
+  useEffect(() => {
+    // track chain, and check if user has joined bitsave on that chain
+    if (formData.selectedChain) {
+      (async () => {
+        const userContract = await getUserChildContract(
+          address!,
+          Number(formData.selectedChain) as ChainId
+        );
+        setHasAlreadyJoinedBitsave(!(userContract === zeroAddress));
+        console.log("Checking if user has joined Bitsave", {
+          userContract,
+          selectedChain: formData.selectedChain,
+          address,
+          hasAlreadyJoinedBitsave,
+        });
+      })();
+    }
+  }, [formData.selectedChain, address]);
 
   useEffect(() => {
     setIsClient(true);
@@ -58,6 +125,13 @@ export default function CreatePlanPage({
     setCurrentDate(oneMonthFromNow);
     setFormData((prev) => ({ ...prev, maturityDate: oneMonthFromNow }));
   }, []);
+
+  // Fetch balance when token or chain changes
+  useEffect(() => {
+    if (formData.selectedToken && formData.selectedChain) {
+      fetchTokenBalance(formData.selectedToken, Number(formData.selectedChain));
+    }
+  }, [formData.selectedToken, formData.selectedChain, address]);
 
   const loadingSteps = [
     { id: 1, title: "Join Bitsave", description: "Setting up your account..." },
@@ -75,7 +149,116 @@ export default function CreatePlanPage({
   ];
 
   const handleNext = () => {
-    // Here you could add form validation
+    // Clear previous errors
+    setErrors({
+      name: "",
+      amount: "",
+      penaltyFee: "",
+      maturityDate: "",
+    });
+
+    let hasErrors = false;
+    const newErrors = {
+      name: "",
+      amount: "",
+      penaltyFee: "",
+      maturityDate: "",
+    };
+
+    // Validate name
+    if (!formData.name.trim()) {
+      newErrors.name = "Plan name is required";
+      hasErrors = true;
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = "Plan name must be at least 2 characters long";
+      hasErrors = true;
+    } else if (formData.name.trim().length > 50) {
+      newErrors.name = "Plan name must be less than 50 characters";
+      hasErrors = true;
+    }
+
+    // Validate amount
+    if (!formData.amount.trim()) {
+      newErrors.amount = "Amount is required";
+      hasErrors = true;
+    } else {
+      const amount = parseFloat(formData.amount);
+      const currentBalance = parseFloat(tokenBalance);
+
+      if (isNaN(amount)) {
+        newErrors.amount = "Amount must be a valid number";
+        hasErrors = true;
+      } else if (amount <= 0) {
+        newErrors.amount = "Amount must be greater than 0";
+        hasErrors = true;
+      } else if (amount > 1000000) {
+        newErrors.amount = "Amount cannot exceed $1,000,000";
+        hasErrors = true;
+      } else if (amount < 1) {
+        newErrors.amount = "Minimum amount is $1";
+        hasErrors = true;
+      } else if (amount > currentBalance) {
+        newErrors.amount = `Insufficient balance. You have ${parseFloat(tokenBalance).toFixed(4)} ${getTokenInfo(formData.selectedToken).symbol}`;
+        hasErrors = true;
+      }
+    }
+
+    // Validate penalty fee
+    if (!formData.penaltyFee.trim()) {
+      newErrors.penaltyFee = "Penalty fee is required";
+      hasErrors = true;
+    } else {
+      const penaltyFee = parseFloat(formData.penaltyFee);
+      if (isNaN(penaltyFee)) {
+        newErrors.penaltyFee = "Penalty fee must be a valid number";
+        hasErrors = true;
+      } else if (penaltyFee < 0) {
+        newErrors.penaltyFee = "Penalty fee cannot be negative";
+        hasErrors = true;
+      } else if (penaltyFee > 100) {
+        newErrors.penaltyFee = "Penalty fee cannot exceed 100%";
+        hasErrors = true;
+      }
+    }
+
+    // Validate maturity date
+    if (!formData.maturityDate) {
+      newErrors.maturityDate = "Maturity date is required";
+      hasErrors = true;
+    } else {
+      const today = new Date();
+      const oneMonthFromNow = new Date(today);
+      oneMonthFromNow.setMonth(today.getMonth() + 1);
+      oneMonthFromNow.setDate(oneMonthFromNow.getDate() - 1);
+
+      console.log("maturity date", formData.maturityDate);
+
+      if (formData.maturityDate < oneMonthFromNow) {
+        newErrors.maturityDate =
+          "Maturity date must be at least one month from today";
+        hasErrors = true;
+      }
+
+      const fiveYearsFromNow = new Date(today);
+      fiveYearsFromNow.setFullYear(today.getFullYear() + 5);
+
+      if (formData.maturityDate > fiveYearsFromNow) {
+        newErrors.maturityDate =
+          "Maturity date cannot be more than 5 years from today";
+        hasErrors = true;
+      }
+    }
+
+    if (hasErrors) {
+      // scroll to top if name or amount has errors
+      if (newErrors.name || newErrors.amount) {
+        window.scroll({ top: 0, behavior: "smooth" });
+      }
+      setErrors(newErrors);
+      return;
+    }
+
+    // If no errors, proceed to preview
     setCurrentStep("preview");
   };
 
@@ -210,12 +393,23 @@ export default function CreatePlanPage({
               <Input
                 id="plan-name"
                 placeholder="Emergency Fund"
-                className="bg-white/30 backdrop-blur-sm border-white/40"
+                className={`bg-white/30 backdrop-blur-sm border-white/40 ${
+                  errors.name ? "border-red-400 focus:border-red-500" : ""
+                }`}
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value });
+                  // Clear error when user starts typing
+                  if (errors.name) {
+                    setErrors({ ...errors, name: "" });
+                  }
+                }}
               />
+              {errors.name && (
+                <p className="text-red-500 text-xs mt-1 font-medium">
+                  {errors.name}
+                </p>
+              )}
             </div>
 
             {/* Amount */}
@@ -226,16 +420,57 @@ export default function CreatePlanPage({
               >
                 Amount ($)
               </Label>
-              <Input
-                id="plan-amount"
-                type="number"
-                placeholder="1000"
-                className="bg-white/30 backdrop-blur-sm border-white/40"
-                value={formData.amount}
-                onChange={(e) =>
-                  setFormData({ ...formData, amount: e.target.value })
-                }
-              />
+              <div className="relative">
+                <Input
+                  id="plan-amount"
+                  type="number"
+                  placeholder="1000"
+                  className={`bg-white/30 backdrop-blur-sm border-white/40 pr-16 ${
+                    errors.amount ? "border-red-400 focus:border-red-500" : ""
+                  }`}
+                  value={formData.amount}
+                  onChange={(e) => {
+                    setFormData({ ...formData, amount: e.target.value });
+                    // Clear error when user starts typing
+                    if (errors.amount) {
+                      setErrors({ ...errors, amount: "" });
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const maxAmount = parseFloat(tokenBalance).toFixed(4);
+                    setFormData({ ...formData, amount: maxAmount });
+                    // Clear error when user uses max
+                    if (errors.amount) {
+                      setErrors({ ...errors, amount: "" });
+                    }
+                  }}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs bg-orange-500/80 text-white rounded-lg hover:bg-orange-600/80 transition-colors"
+                  disabled={isLoadingBalance || parseFloat(tokenBalance) === 0}
+                >
+                  Max
+                </button>
+              </div>
+
+              {/* Balance Display */}
+              <div className="mt-1">
+                {isLoadingBalance ? (
+                  <p className="text-xs text-gray-600">Loading balance...</p>
+                ) : (
+                  <p className="text-xs text-gray-600">
+                    Balance: {parseFloat(tokenBalance).toFixed(4)}{" "}
+                    {getTokenInfo(formData.selectedToken).symbol}
+                  </p>
+                )}
+              </div>
+
+              {errors.amount && (
+                <p className="text-red-500 text-xs mt-1 font-medium">
+                  {errors.amount}
+                </p>
+              )}
             </div>
 
             {/* Chain */}
@@ -246,6 +481,17 @@ export default function CreatePlanPage({
                 onValueChange={(value) => {
                   switchChain({ chainId: Number(value) });
                   setFormData({ ...formData, selectedChain: value });
+                  // Reset token to first available token for new chain
+                  const newChainTokens = getSupportedTokens(
+                    getChainName(Number(value)).toUpperCase()
+                  );
+                  if (newChainTokens.length > 0) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      selectedChain: value,
+                      selectedToken: newChainTokens[0].address || "",
+                    }));
+                  }
                 }}
               >
                 <SelectTrigger className="rounded-xl bg-white/30 backdrop-blur-sm border-white/40">
@@ -266,9 +512,11 @@ export default function CreatePlanPage({
               <Label className="text-gray-800">Currency</Label>
               <Select
                 value={formData.selectedToken}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, selectedToken: value })
-                }
+                onValueChange={(value) => {
+                  setFormData({ ...formData, selectedToken: value });
+                  // Fetch balance for new token
+                  fetchTokenBalance(value, Number(formData.selectedChain));
+                }}
               >
                 <SelectTrigger className="rounded-xl bg-white/30 backdrop-blur-sm border-white/40">
                   <SelectValue placeholder="Select token" />
@@ -301,7 +549,11 @@ export default function CreatePlanPage({
               <Label className="text-xs font-grotesk text-gray-800">
                 Maturity Time
               </Label>
-              <div className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-xl p-4">
+              <div
+                className={`bg-white/30 backdrop-blur-sm border border-white/40 rounded-xl p-4 ${
+                  errors.maturityDate ? "border-red-400" : ""
+                }`}
+              >
                 {/* Date Display */}
                 <div className="text-center mb-4">
                   <div className="text-lg font-semibold text-gray-800">
@@ -310,12 +562,10 @@ export default function CreatePlanPage({
                       : "Loading..."}
                   </div>
                   <div className="text-sm text-gray-600">
-                    {isClient && currentDate
-                      ? format(currentDate, "EEEE")
-                      : ""}
+                    {isClient && currentDate ? format(currentDate, "EEEE") : ""}
                   </div>
                 </div>
-                
+
                 {/* Month/Year Selector */}
                 <div className="flex justify-between items-center mb-4">
                   <button
@@ -330,6 +580,10 @@ export default function CreatePlanPage({
                         if (newDate >= oneMonthFromNow) {
                           setCurrentDate(newDate);
                           setFormData({ ...formData, maturityDate: newDate });
+                          // Clear error when user changes date
+                          if (errors.maturityDate) {
+                            setErrors({ ...errors, maturityDate: "" });
+                          }
                         }
                       }
                     }}
@@ -337,13 +591,15 @@ export default function CreatePlanPage({
                   >
                     <ArrowLeft className="w-4 h-4 text-gray-700" />
                   </button>
-                  
+
                   <div className="text-center">
                     <div className="text-base font-medium text-gray-800">
-                      {isClient && currentDate ? format(currentDate, "MMMM yyyy") : ""}
+                      {isClient && currentDate
+                        ? format(currentDate, "MMMM yyyy")
+                        : ""}
                     </div>
                   </div>
-                  
+
                   <button
                     type="button"
                     onClick={() => {
@@ -352,6 +608,10 @@ export default function CreatePlanPage({
                         newDate.setMonth(newDate.getMonth() + 1);
                         setCurrentDate(newDate);
                         setFormData({ ...formData, maturityDate: newDate });
+                        // Clear error when user changes date
+                        if (errors.maturityDate) {
+                          setErrors({ ...errors, maturityDate: "" });
+                        }
                       }
                     }}
                     className="p-2 rounded-lg bg-white/40 border border-white/50 hover:bg-white/60 transition-colors"
@@ -362,7 +622,9 @@ export default function CreatePlanPage({
 
                 {/* Quick Date Options */}
                 <div className="space-y-2">
-                  <div className="text-xs font-medium text-gray-700 mb-2">Quick Select:</div>
+                  <div className="text-xs font-medium text-gray-700 mb-2">
+                    Quick Select:
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { label: "1 Month", months: 1 },
@@ -379,6 +641,10 @@ export default function CreatePlanPage({
                           newDate.setMonth(today.getMonth() + option.months);
                           setCurrentDate(newDate);
                           setFormData({ ...formData, maturityDate: newDate });
+                          // Clear error when user changes date
+                          if (errors.maturityDate) {
+                            setErrors({ ...errors, maturityDate: "" });
+                          }
                         }}
                         className="py-2 px-3 text-sm rounded-lg bg-white/40 border border-white/50 hover:bg-orange-500/80 hover:text-white transition-all duration-200 text-gray-700"
                       >
@@ -390,19 +656,32 @@ export default function CreatePlanPage({
 
                 {/* Custom Date Input */}
                 <div className="mt-4 pt-4 border-t border-white/40">
-                  <div className="text-xs font-medium text-gray-700 mb-2">Or choose specific date:</div>
+                  <div className="text-xs font-medium text-gray-700 mb-2">
+                    Or choose specific date:
+                  </div>
                   <input
                     type="date"
-                    value={isClient && currentDate ? format(currentDate, "yyyy-MM-dd") : ""}
+                    value={
+                      isClient && currentDate
+                        ? format(currentDate, "yyyy-MM-dd")
+                        : ""
+                    }
                     onChange={(e) => {
                       const selectedDate = new Date(e.target.value);
                       const today = new Date();
                       const oneMonthFromNow = new Date(today);
                       oneMonthFromNow.setMonth(today.getMonth() + 1);
-                      
+
                       if (selectedDate >= oneMonthFromNow) {
                         setCurrentDate(selectedDate);
-                        setFormData({ ...formData, maturityDate: selectedDate });
+                        setFormData({
+                          ...formData,
+                          maturityDate: selectedDate,
+                        });
+                        // Clear error when user changes date
+                        if (errors.maturityDate) {
+                          setErrors({ ...errors, maturityDate: "" });
+                        }
                       }
                     }}
                     min={(() => {
@@ -415,6 +694,11 @@ export default function CreatePlanPage({
                   />
                 </div>
               </div>
+              {errors.maturityDate && (
+                <p className="text-red-500 text-xs mt-1 font-medium">
+                  {errors.maturityDate}
+                </p>
+              )}
             </div>
 
             {/* Penalty fee */}
@@ -429,12 +713,23 @@ export default function CreatePlanPage({
                 id="penalty-fee"
                 type="number"
                 placeholder="5"
-                className="bg-white/30 backdrop-blur-sm border-white/40"
+                className={`bg-white/30 backdrop-blur-sm border-white/40 ${
+                  errors.penaltyFee ? "border-red-400 focus:border-red-500" : ""
+                }`}
                 value={formData.penaltyFee}
-                onChange={(e) =>
-                  setFormData({ ...formData, penaltyFee: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, penaltyFee: e.target.value });
+                  // Clear error when user starts typing
+                  if (errors.penaltyFee) {
+                    setErrors({ ...errors, penaltyFee: "" });
+                  }
+                }}
               />
+              {errors.penaltyFee && (
+                <p className="text-red-500 text-xs mt-1 font-medium">
+                  {errors.penaltyFee}
+                </p>
+              )}
             </div>
 
             {/* Action - next, cancel */}

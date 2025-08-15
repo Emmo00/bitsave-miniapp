@@ -5,9 +5,7 @@ import BITSAVE_ABI from "../abi/BitSave.json";
 import CHILDCONTRACT_ABI from "../abi/ChildContract.json";
 import CONTRACT_ADDRESSES from "../constants/addresses";
 import { Address, Hex, zeroAddress } from "viem";
-
-type SupportedChains = keyof typeof CONTRACT_ADDRESSES;
-type ChainId = (typeof config.chains)[number]["id"];
+import type { ChainId, SupportedChains } from "@/types";
 
 export async function getJoiningFee(chainId: ChainId = config.state.chainId) {
   const result = (await readContract(config, {
