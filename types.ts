@@ -1,10 +1,12 @@
-interface SavingsPlan {
+import { Stablecoin } from "./constants/addresses";
+
+export interface SavingsPlan {
   name: string;
-  amount: number;
+  amount: bigint;
+  amountInDollar: number;
   isWithdrawn: boolean;
   startTime: number;
   penaltyPercentage: number;
   maturityTime: number;
-  currency?: string;
-  chain?: string;
+  token: Stablecoin & { chain: string };
 }

@@ -11,6 +11,7 @@ import SavingsPlanDetailsPage from "./SavingsPlanDetailsPage";
 import { useSavings } from "@/hooks/useActiveSavings";
 import { useAccount, useConnect } from "wagmi";
 import { formatCurrency } from "@/utils";
+import type { SavingsPlan } from "@/types";
 
 export default function HomePage({
   setCurrentTab,
@@ -183,14 +184,14 @@ export default function HomePage({
                     {saving.name}
                   </h3>
                   <p className="text-gray-700 text-sm">
-                    {formatCurrency(saving.amount)} {saving.currency}
+                    {formatCurrency(saving.amountInDollar)}{" "}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="bg-orange-100/80 backdrop-blur-sm rounded-lg flex items-center justify-center border border-orange-200/50">
                     <div className="text-xs py-1 px-2">
-                      <span>{saving.currency}</span> on{" "}
-                      <span>{saving.chain}</span>
+                      <span>{saving.token.name}</span> on{" "}
+                      <span>{saving.token.chain}</span>
                     </div>
                   </div>
                 </div>

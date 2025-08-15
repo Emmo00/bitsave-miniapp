@@ -3,7 +3,9 @@ import {
   getAllUserSavings,
 } from "@/onchain/reads";
 import { useEffect, useState } from "react";
-import { Hex } from "viem";
+import { formatUnits, Hex } from "viem";
+import type { SavingsPlan } from "@/types";
+import { getCoinFromTokenAddress } from "@/utils";
 
 export function useSavings(account: Hex) {
   const [isLoading, setIsLoading] = useState(true);
@@ -50,16 +52,20 @@ export function useSavings(account: Hex) {
 
         setSavings(
           allSavings.map((plan) => ({
-            ...plan,
-            amount: Number(plan.amount),
+            name: plan.name,
+            amount: plan.amount,
+            amountInDollar: Number(
+              formatUnits(
+                plan.amount,
+                getCoinFromTokenAddress(plan.tokenId)!.decimals
+              )
+            ),
             isWithdrawn: !plan.isValid,
             startTime: Number(plan.startTime),
             penaltyPercentage: Number(plan.penaltyPercentage),
             maturityTime: Number(plan.maturityTime),
+            token: getCoinFromTokenAddress(plan.tokenId)!,
           }))
-        );
-        setTotalAmountInSavings(
-          allSavings.reduce((acc, plan) => acc + Number(plan.amount), 0)
         );
       } catch (error) {
         setError(error as string);
@@ -71,6 +77,13 @@ export function useSavings(account: Hex) {
 
     fetchData();
   }, [account]);
+
+  // set total amount in savings
+  useEffect(() =>
+    setTotalAmountInSavings(
+      savings.reduce((total, plan) => plan.amountInDollar + total, 0)
+    )
+  );
 
   useEffect(() => {
     const active = savings.filter((plan) => !plan.isWithdrawn);
