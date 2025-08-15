@@ -234,19 +234,23 @@ export default function HomePage({
                 />
                 <div className="flex justify-between pt-2">
                   <span></span>
-                  <span className="text-xs text-green-600">
-                    Matures:{" "}
-                    {isClient
-                      ? new Date(
-                          saving.maturityTime * 1000
-                        ).toLocaleDateString()
-                      : "Loading..."}
-                  </span>
+                  {isClient && saving.maturityTime > currentTime! ? (
+                    <span className="text-xs text-green-600">
+                      Matures:{" "}
+                      {isClient
+                        ? new Date(
+                            saving.maturityTime * 1000
+                          ).toLocaleDateString()
+                        : "Loading..."}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-600">Matured</span>
+                  )}
                 </div>
               </Card>
             ))}
 
-          {activeSavings.length === 0 && (
+          {!isLoading && activeSavings.length === 0 && (
             <div className="text-center py-16">
               <TrendingUp className="w-16 h-16 mx-auto mb-4 text-gray-400" />
               <h3 className="text-lg font-semibold text-gray-600 mb-2">
@@ -262,6 +266,14 @@ export default function HomePage({
                 <Plus className="w-4 h-4 mr-2" />
                 Create Savings Plan
               </Button>
+            </div>
+          )}
+
+          {isLoading && (
+            <div className="text-center py-16">
+              <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                Loading Savings Plans...
+              </h3>
             </div>
           )}
         </div>

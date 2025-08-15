@@ -118,7 +118,8 @@ export default function VaultsPage({ setCurrentTab }: Props) {
                 <div className="flex items-center gap-2">
                   <div className="bg-orange-100/80 backdrop-blur-sm rounded-lg flex items-center justify-center border border-orange-200/50">
                     <div className="text-xs py-1 px-2">
-                      <span>{saving.token.name}</span> on <span>{saving.token.chain}</span>
+                      <span>{saving.token.name}</span> on{" "}
+                      <span>{saving.token.chain}</span>
                     </div>
                   </div>
                 </div>
@@ -195,7 +196,7 @@ export default function VaultsPage({ setCurrentTab }: Props) {
             </Card>
           ))}
 
-          {activeSavings.length === 0 && (
+          {!isFetchingSavings && activeSavings.length === 0 && (
             <div className="text-center py-16">
               <TrendingUp className="w-16 h-16 mx-auto mb-4 text-gray-400" />
               <h3 className="text-lg font-semibold text-gray-600 mb-2">
@@ -211,6 +212,14 @@ export default function VaultsPage({ setCurrentTab }: Props) {
                 <Plus className="w-4 h-4 mr-2" />
                 Create Savings Plan
               </Button>
+            </div>
+          )}
+
+          {isFetchingSavings && (
+            <div className="text-center py-16">
+              <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                Loading Savings Plans...
+              </h3>
             </div>
           )}
         </div>
