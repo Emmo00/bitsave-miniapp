@@ -364,21 +364,22 @@ export default function CreatePlanPage({
 
       // Step 1: Join BitSave if not already joined
       if (!hasAlreadyJoinedBitsave) {
-        setLoadingStep(1);
         try {
           const joiningFee = await getJoiningFee(chainId);
-
+          
           const joinBitsaveHash = await writeJoinBitsaveContract({
             abi: BITSAVE_ABI,
             address: CONTRACT_ADDRESSES[getChainName(chainId).toUpperCase()]
-              .BITSAVE as Address,
+            .BITSAVE as Address,
             functionName: "joinBitsave",
             chainId,
             value: joiningFee,
           });
-
+          
           // Wait for 1 confirmation
           await waitForConfirmations(joinBitsaveHash, 1);
+          
+          setLoadingStep(1);
         } catch (error: any) {
           console.error("Join BitSave error:", error);
           showErrorToast(
@@ -394,8 +395,7 @@ export default function CreatePlanPage({
 
       // Step 2: Approve token transfer
       const approveStepId = hasAlreadyJoinedBitsave ? 1 : 2;
-      setLoadingStep(approveStepId);
-
+      
       try {
         const createSavingsFee = await getCreateSavingsFee(chainId);
         const totalAmount = amount + createSavingsFee;
@@ -406,14 +406,15 @@ export default function CreatePlanPage({
           functionName: "approve",
           args: [
             CONTRACT_ADDRESSES[getChainName(chainId).toUpperCase()]
-              .BITSAVE as Address,
+            .BITSAVE as Address,
             totalAmount,
           ],
           chainId,
         });
-
+        
         // Wait for 1 confirmation
         await waitForConfirmations(approveHash, 1);
+        setLoadingStep(approveStepId);
       } catch (error: any) {
         console.error("Token approval error:", error);
         if (error?.message?.includes("insufficient")) {
@@ -440,8 +441,7 @@ export default function CreatePlanPage({
 
       // Step 3: Create savings plan
       const createStepId = hasAlreadyJoinedBitsave ? 2 : 3;
-      setLoadingStep(createStepId);
-
+      
       try {
         // Convert maturity date to timestamp
         const maturityTimestamp = Math.floor(
@@ -452,7 +452,7 @@ export default function CreatePlanPage({
         const createSavingHash = await writeCreateSavingsContract({
           abi: BITSAVE_ABI,
           address: CONTRACT_ADDRESSES[getChainName(chainId).toUpperCase()]
-            .BITSAVE as Address,
+          .BITSAVE as Address,
           functionName: "createSaving",
           args: [
             formData.name,
@@ -465,9 +465,11 @@ export default function CreatePlanPage({
           chainId,
           value: createSavingsFee,
         });
-
+        
         // Wait for 2 confirmations
         await waitForConfirmations(createSavingHash, 2);
+        
+        setLoadingStep(createStepId);
       } catch (error: any) {
         console.error("Create savings error:", error);
         if (error?.message?.includes("insufficient")) {

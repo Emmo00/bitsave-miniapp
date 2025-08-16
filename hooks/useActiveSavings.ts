@@ -14,6 +14,7 @@ export function useSavings(account: Hex) {
   const [savings, setSavings] = useState<SavingsPlan[]>([]);
   const [activeSavings, setActiveSavings] = useState<SavingsPlan[]>([]);
   const [withdrawnSavings, setWithdrawnSavings] = useState<SavingsPlan[]>([]);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 
   const getUserVaultAddresses = async () => {
     console.log("user account (address)", account);
@@ -70,6 +71,7 @@ export function useSavings(account: Hex) {
           token: getCoinFromTokenAddress(plan.tokenId)!,
         }))
       );
+      setHasInitiallyLoaded(true);
     } catch (error) {
       setError(error as string);
     } finally {
@@ -83,8 +85,15 @@ export function useSavings(account: Hex) {
   }
 
   useEffect(() => {
-    fetchData();
-  }, [account]);
+    if (savings.length > 0) {
+      setHasInitiallyLoaded(true);
+      return;
+    }
+    // Only fetch data once on initial mount if we have an account and haven't loaded yet
+    if (account && !hasInitiallyLoaded) {
+      fetchData();
+    }
+  }, [account, hasInitiallyLoaded]);
 
   // set total amount in savings
   useEffect(() =>
