@@ -7,8 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "../ui/button";
 import { useState, useEffect } from "react";
 import SavingsPlanDetailsPage from "./SavingsPlanDetailsPage";
-import TopUpModal from "@/components/modals/TopUpModal";
-import WithdrawModal from "@/components/modals/WithdrawModal";
 import { useAccount, useConnect } from "wagmi";
 import { useSavings } from "@/hooks/useActiveSavings";
 import type { SavingsPlan } from "@/types";
@@ -175,53 +173,6 @@ export default function VaultsPage({ setCurrentTab }: Props) {
                         ).toLocaleDateString()
                       : "Loading..."}
                   </span>
-                </div>
-                <div className="flex justify-between">
-                  <div></div>
-                  <div className="flex justify-center items-center gap-2">
-                    <WithdrawModal
-                      planName={saving.name}
-                      tokenSymbol={saving.token.name}
-                      totalAmount={saving.formattedAmount}
-                      isMatured={saving.maturityTime <= currentTime!}
-                      penaltyPercentage={saving.penaltyPercentage}
-                      maturityDate={new Date(saving.maturityTime * 1000)}
-                      onWithdraw={() => {
-                        // Handle the withdraw action here
-                        console.log(`Withdrew from ${saving.name}`);
-                      }}
-                    >
-                      <Button
-                        variant="outline"
-                        className="mt-4 mr-2"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent card click
-                        }}
-                      >
-                        <ChevronDown className="" /> Withdraw
-                      </Button>
-                    </WithdrawModal>
-                    <TopUpModal
-                      planName={saving.name}
-                      tokenSymbol={saving.token.name}
-                      onTopUp={(amount) => {
-                        // Handle the top up action here
-                        console.log(
-                          `Topped up ${amount} ${saving.token.name} to ${saving.name}`
-                        );
-                      }}
-                    >
-                      <Button
-                        variant="outline"
-                        className="bg-gradient-to-r from-weirdGreen-80 to-weirdGreen text-white font-medium py-2 rounded-lg mt-4"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent card click
-                        }}
-                      >
-                        <Plus className="" /> Deposit
-                      </Button>
-                    </TopUpModal>
-                  </div>
                 </div>
               </Card>
             ))}

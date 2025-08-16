@@ -14,6 +14,11 @@ export function getChainName(chainId: number): string {
   return chain ? chain.name : "Unknown Chain";
 }
 
+export function getChainIdFromName(chainName: string): number {
+  const chain = config.chains.find((c) => c.name.toLowerCase() === chainName.toLowerCase());
+  return chain ? chain.id : config.chains[0].id; // Default to first chain if not found
+}
+
 /**
  * Get token information (symbol, image, name, decimals) from token address
  * Only supports stablecoins defined in constants/addresses.ts

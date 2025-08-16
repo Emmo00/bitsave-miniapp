@@ -21,11 +21,14 @@ import TopUpModal from "@/components/modals/TopUpModal";
 import WithdrawModal from "@/components/modals/WithdrawModal";
 import type { SavingsPlan } from "@/types";
 import { formatCurrency } from "@/utils";
+import { getChainIdFromName } from "@/lib/tokenUtils";
+import { ChainId } from "@/types";
 
 interface SavingsPlanDetailsPageProps {
   savingDetails: SavingsPlan | null;
   setCurrentTab: (tab: any) => void;
   onBack: () => void;
+  onRefetch?: () => void;
 }
 
 interface ActivityItem {
@@ -42,11 +45,14 @@ export default function SavingsPlanDetailsPage({
   savingDetails,
   setCurrentTab,
   onBack,
+  onRefetch,
 }: SavingsPlanDetailsPageProps) {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [currentTime, setCurrentTime] = useState<number | null>(null);
+
+  console.log("saving Details", savingDetails, Date.now() / 1000);
 
   useEffect(() => {
     setIsClient(true);
@@ -54,11 +60,10 @@ export default function SavingsPlanDetailsPage({
     setCurrentTime(now);
   }, []);
 
-    useEffect(() => {
-      // scroll to top
-      window.scroll({ top: 0, behavior: "smooth" });
+  useEffect(() => {
+    // scroll to top
+    window.scroll({ top: 0, behavior: "smooth" });
   }, []);
-
 
   useEffect(() => {
     if (savingDetails && isClient && currentTime) {
@@ -357,46 +362,55 @@ export default function SavingsPlanDetailsPage({
               animation: "fadeInUp 0.3s ease-out 0.4s both",
             }}
           >
-            <WithdrawModal
-              planName={savingDetails.name}
-              tokenSymbol={savingDetails.token.name}
-              totalAmount={savingDetails.formattedAmount}
-              isMatured={savingDetails.maturityTime < Date.now() / 1000}
-              penaltyPercentage={savingDetails.penaltyPercentage}
-              maturityDate={new Date(savingDetails.maturityTime * 1000)}
-              onWithdraw={() => {
-                // Handle the withdraw action here
-                console.log(`Withdrew from ${savingDetails.name}`);
-              }}
-            >
-              <Button
-                variant="outline"
-                className="flex-1 bg-white/20 backdrop-blur-md border border-white/30 hover:bg-white/30 transition-all duration-300 text-gray-800 font-medium py-3 rounded-xl"
-                disabled={isLoading}
+            {!savingDetails.isWithdrawn && (
+              <WithdrawModal
+                planName={savingDetails.name}
+                tokenSymbol={savingDetails.token.name}
+                totalAmount={savingDetails.formattedAmount}
+                isMatured={savingDetails.maturityTime < Date.now() / 1000}
+                penaltyPercentage={savingDetails.penaltyPercentage}
+                maturityDate={new Date(savingDetails.maturityTime * 1000)}
+                onWithdraw={() => {
+                  // Handle the withdraw action here
+                  console.log(`Withdrew from ${savingDetails.name}`);
+                }}
               >
-                <Download className="w-4 h-4 mr-2" />
-                Withdraw
-              </Button>
-            </WithdrawModal>
+                <Button
+                  variant="outline"
+                  className="flex-1 bg-white/20 backdrop-blur-md border border-white/30 hover:bg-white/30 transition-all duration-300 text-gray-800 font-medium py-3 rounded-xl"
+                  disabled={isLoading}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Withdraw
+                </Button>
+              </WithdrawModal>
+            )}
 
-            <TopUpModal
-              planName={savingDetails.name}
-              tokenSymbol={savingDetails.token.name}
-              onTopUp={(amount) => {
-                // Handle the top up action here
-                console.log(
-                  `Topped up ${amount} ${savingDetails.token.name} to ${savingDetails.name}`
-                );
-              }}
-            >
-              <Button
-                className="flex-1 bg-gradient-to-r from-weirdGreen-80 to-weirdGreen text-white font-medium py-3 rounded-xl hover:shadow-xl transform hover:scale-105 transition-all duration-300 shadow-lg"
-                disabled={isLoading}
+            {savingDetails.maturityTime > Date.now() / 1000 && (
+              <TopUpModal
+                planName={savingDetails.name}
+                tokenSymbol={savingDetails.token.name}
+                tokenAddress={savingDetails.token.address}
+                chainId={
+                  getChainIdFromName(savingDetails.token.chain) as ChainId
+                }
+                onTopUp={(amount) => {
+                  // Handle the top up action here - could trigger a refetch of savings data
+                  console.log(
+                    `Topped up ${amount} ${savingDetails.token.name} to ${savingDetails.name}`
+                  );
+                }}
+                onRefetch={onRefetch}
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Top Up
-              </Button>
-            </TopUpModal>
+                <Button
+                  className="flex-1 bg-gradient-to-r from-weirdGreen-80 to-weirdGreen text-white font-medium py-3 rounded-xl hover:shadow-xl transform hover:scale-105 transition-all duration-300 shadow-lg"
+                  disabled={isLoading}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Top Up
+                </Button>
+              </TopUpModal>
+            )}
           </div>
 
           {/* Activities Section */}
