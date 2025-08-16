@@ -215,7 +215,7 @@ export default function HomePage({
           </div>
           {/* Show 3 active savings plans */}
           {activeSavings.length >= 1 &&
-            activeSavings.reverse().slice(0, 3).map((saving, index) => (
+            activeSavings.slice().reverse().slice(0, 3).map((saving, index) => (
               <Card
                 key={index}
                 className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 mb-6 shadow-lg cursor-pointer hover:bg-white/15 transition-all duration-300 transform hover:scale-105"
