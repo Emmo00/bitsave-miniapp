@@ -12,7 +12,7 @@ export default function BottomNavigation({ currentTab, setCurrentTab }: Props) {
   const currentTabNavButtonStyle =
     "text-white bg-weirdGreen hover:bg-gray-800 rounded-full";
   return (
-    !["create", "settings"].includes(currentTab) && (
+    !["create"].includes(currentTab) && (
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-xs bg-black rounded-full px-6 py-3 shadow-lg transition-all duration-300 ease-out animate-slide-up">
         <div className="flex items-center justify-between">
           <Button
