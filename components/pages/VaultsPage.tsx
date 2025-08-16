@@ -30,6 +30,8 @@ export default function VaultsPage({ setCurrentTab }: Props) {
     isLoading: isFetchingSavings,
     activeSavings,
     withdrawnSavings,
+    savings,
+    refetch,
   } = useSavings(address!);
 
   useEffect(() => {
@@ -44,6 +46,16 @@ export default function VaultsPage({ setCurrentTab }: Props) {
     setCurrentTime(now);
   }, []);
 
+  // Update selectedSaving when savings data changes (after refetch)
+  useEffect(() => {
+    if (selectedSaving && savings.length > 0) {
+      const updatedSaving = savings.find(s => s.name === selectedSaving.name);
+      if (updatedSaving) {
+        setSelectedSaving(updatedSaving);
+      }
+    }
+  }, [savings, selectedSaving?.name]);
+
   const handleCardClick = (saving: SavingsPlan) => {
     setSelectedSaving(saving);
     setShowDetails(true);
@@ -54,12 +66,17 @@ export default function VaultsPage({ setCurrentTab }: Props) {
     setSelectedSaving(null);
   };
 
+  const handleRefetchSavings = async () => {
+    await refetch();
+  };
+
   if (showDetails) {
     return (
       <SavingsPlanDetailsPage
         savingDetails={selectedSaving}
         setCurrentTab={setCurrentTab}
         onBack={handleBackFromDetails}
+        onRefetch={handleRefetchSavings}
       />
     );
   }

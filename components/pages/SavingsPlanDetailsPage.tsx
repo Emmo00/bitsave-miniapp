@@ -23,6 +23,7 @@ import type { SavingsPlan } from "@/types";
 import { formatCurrency } from "@/utils";
 import { getChainIdFromName } from "@/lib/tokenUtils";
 import { ChainId } from "@/types";
+import { useToast } from "@/hooks/useToast";
 
 interface SavingsPlanDetailsPageProps {
   savingDetails: SavingsPlan | null;
@@ -49,10 +50,10 @@ export default function SavingsPlanDetailsPage({
 }: SavingsPlanDetailsPageProps) {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [currentTime, setCurrentTime] = useState<number | null>(null);
-
-  console.log("saving Details", savingDetails, Date.now() / 1000);
+  const { success: showSuccessToast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
@@ -215,7 +216,9 @@ export default function SavingsPlanDetailsPage({
 
       <div className="pt-[10vh] text-black pb-32">
         <div
-          className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl"
+          className={`bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-t-3xl min-h-[90vh] shadow-2xl transition-opacity duration-300 ${
+            isRefreshing ? "opacity-80" : "opacity-100"
+          }`}
           style={{
             animation: "fadeInUp 0.4s ease-out",
           }}
@@ -247,6 +250,11 @@ export default function SavingsPlanDetailsPage({
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">
                   {savingDetails.name}
+                  {isRefreshing && (
+                    <span className="ml-2 text-sm text-orange-600 animate-pulse">
+                      Updating...
+                    </span>
+                  )}
                 </h2>
                 <Badge
                   variant={savingDetails.isWithdrawn ? "default" : "secondary"}
@@ -400,7 +408,19 @@ export default function SavingsPlanDetailsPage({
                     `Topped up ${amount} ${savingDetails.token.name} to ${savingDetails.name}`
                   );
                 }}
-                onRefetch={onRefetch}
+                onRefetch={async () => {
+                  if (onRefetch) {
+                    setIsRefreshing(true);
+                    try {
+                      await onRefetch();
+                      showSuccessToast("Updated!", "Savings plan data refreshed");
+                    } catch (error) {
+                      console.error("Error refreshing data:", error);
+                    } finally {
+                      setIsRefreshing(false);
+                    }
+                  }
+                }}
               >
                 <Button
                   className="flex-1 bg-gradient-to-r from-weirdGreen-80 to-weirdGreen text-white font-medium py-3 rounded-xl hover:shadow-xl transform hover:scale-105 transition-all duration-300 shadow-lg"
