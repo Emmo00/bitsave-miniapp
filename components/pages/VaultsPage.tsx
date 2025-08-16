@@ -113,7 +113,7 @@ export default function VaultsPage({ setCurrentTab }: Props) {
           <div className="flex gap-2 mb-6">
             <Button
               variant="default"
-              className={`flex-1 outline-none ${showActiveSavings ? "pointer-events-none opacity-50  bg-gradient-to-r from-weirdGreen-80 to-weirdGreen text-white hover:bg-weirdGreen-90 shadow-lg" : "bg-f2f2f2 text-black hover:bg-weirdGreen"}`}
+              className={`flex-1 outline-none ${showActiveSavings ? "pointer-events-none opacity-50  bg-gradient-to-r from-weirdGreen-80 to-weirdGreen text-white hover:bg-weirdGreen-90 shadow-lg" : "bg-[#f2f2f2] text-black hover:bg-weirdGreen"}`}
               onClick={() => setShowActiveSavings(true)}
               disabled={isFetchingSavings || showActiveSavings}
             >
@@ -121,11 +121,7 @@ export default function VaultsPage({ setCurrentTab }: Props) {
             </Button>
             <Button
               variant="default"
-              className={`flex-1 ${!showActiveSavings ? "pointer-events-none opacity-50  bg-gradient-to-r from-weirdBlue-80 to-weirdBlue text-white hover:bg-weirdBlue-90 shadow-lg" : "bg-f2f2f2 text-black hover:bg-weirdBlue"} ${
-                !isFetchingSavings && withdrawnSavings.length > 0
-                  ? "bg-weirdBlue text-white"
-                  : ""
-              }`}
+              className={`flex-1 ${!showActiveSavings ? "pointer-events-none opacity-50  bg-gradient-to-r from-weirdBlue-80 to-weirdBlue text-white hover:bg-weirdBlue-90 shadow-lg" : "bg-[#f2f2f2] text-black hover:bg-weirdBlue"}`}
               onClick={() => setShowActiveSavings(false)}
               disabled={isFetchingSavings || !showActiveSavings}
             >

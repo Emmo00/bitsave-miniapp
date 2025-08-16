@@ -374,6 +374,10 @@ export default function SavingsPlanDetailsPage({
               <WithdrawModal
                 planName={savingDetails.name}
                 tokenSymbol={savingDetails.token.name}
+                tokenAddress={savingDetails.token.address}
+                chainId={
+                  getChainIdFromName(savingDetails.token.chain) as ChainId
+                }
                 totalAmount={savingDetails.formattedAmount}
                 isMatured={savingDetails.maturityTime < Date.now() / 1000}
                 penaltyPercentage={savingDetails.penaltyPercentage}
@@ -381,6 +385,19 @@ export default function SavingsPlanDetailsPage({
                 onWithdraw={() => {
                   // Handle the withdraw action here
                   console.log(`Withdrew from ${savingDetails.name}`);
+                }}
+                onRefetch={async () => {
+                  if (onRefetch) {
+                    setIsRefreshing(true);
+                    try {
+                      await onRefetch();
+                      showSuccessToast("Updated!", "Savings plan data refreshed");
+                    } catch (error) {
+                      console.error("Error refreshing data:", error);
+                    } finally {
+                      setIsRefreshing(false);
+                    }
+                  }
                 }}
               >
                 <Button
