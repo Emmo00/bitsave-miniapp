@@ -266,14 +266,8 @@ export default function CreatePlanPage({
       hasErrors = true;
     } else {
       const penaltyFee = parseFloat(formData.penaltyFee);
-      if (isNaN(penaltyFee)) {
-        newErrors.penaltyFee = "Penalty fee must be a valid number";
-        hasErrors = true;
-      } else if (penaltyFee < 0) {
-        newErrors.penaltyFee = "Penalty fee cannot be negative";
-        hasErrors = true;
-      } else if (penaltyFee > 100) {
-        newErrors.penaltyFee = "Penalty fee cannot exceed 100%";
+      if (![10, 20, 30].includes(penaltyFee)) {
+        newErrors.penaltyFee = "Please select a valid penalty percentage";
         hasErrors = true;
       }
     }
@@ -326,9 +320,9 @@ export default function CreatePlanPage({
         );
       } else if (
         newErrors.penaltyFee &&
-        parseFloat(formData.penaltyFee) > 100
+        newErrors.penaltyFee.includes("valid penalty percentage")
       ) {
-        showErrorToast("Invalid Penalty", "Penalty fee cannot exceed 100%");
+        showErrorToast("Invalid Penalty", "Please select a penalty percentage");
       }
 
       // scroll to top if name or amount has errors
@@ -366,19 +360,19 @@ export default function CreatePlanPage({
       if (!hasAlreadyJoinedBitsave) {
         try {
           const joiningFee = await getJoiningFee(chainId);
-          
+
           const joinBitsaveHash = await writeJoinBitsaveContract({
             abi: BITSAVE_ABI,
             address: CONTRACT_ADDRESSES[getChainName(chainId).toUpperCase()]
-            .BITSAVE as Address,
+              .BITSAVE as Address,
             functionName: "joinBitsave",
             chainId,
             value: joiningFee,
           });
-          
+
           // Wait for 1 confirmation
           await waitForConfirmations(joinBitsaveHash, 1);
-          
+
           setLoadingStep(1);
         } catch (error: any) {
           console.error("Join BitSave error:", error);
@@ -395,7 +389,7 @@ export default function CreatePlanPage({
 
       // Step 2: Approve token transfer
       const approveStepId = hasAlreadyJoinedBitsave ? 1 : 2;
-      
+
       try {
         const createSavingsFee = await getCreateSavingsFee(chainId);
         const totalAmount = amount + createSavingsFee;
@@ -406,12 +400,12 @@ export default function CreatePlanPage({
           functionName: "approve",
           args: [
             CONTRACT_ADDRESSES[getChainName(chainId).toUpperCase()]
-            .BITSAVE as Address,
+              .BITSAVE as Address,
             totalAmount,
           ],
           chainId,
         });
-        
+
         // Wait for 1 confirmation
         await waitForConfirmations(approveHash, 1);
         setLoadingStep(approveStepId);
@@ -441,7 +435,7 @@ export default function CreatePlanPage({
 
       // Step 3: Create savings plan
       const createStepId = hasAlreadyJoinedBitsave ? 2 : 3;
-      
+
       try {
         // Convert maturity date to timestamp
         const maturityTimestamp = Math.floor(
@@ -452,7 +446,7 @@ export default function CreatePlanPage({
         const createSavingHash = await writeCreateSavingsContract({
           abi: BITSAVE_ABI,
           address: CONTRACT_ADDRESSES[getChainName(chainId).toUpperCase()]
-          .BITSAVE as Address,
+            .BITSAVE as Address,
           functionName: "createSaving",
           args: [
             formData.name,
@@ -465,10 +459,10 @@ export default function CreatePlanPage({
           chainId,
           value: createSavingsFee,
         });
-        
+
         // Wait for 2 confirmations
         await waitForConfirmations(createSavingHash, 2);
-        
+
         setLoadingStep(createStepId);
       } catch (error: any) {
         console.error("Create savings error:", error);
@@ -808,115 +802,12 @@ export default function CreatePlanPage({
                 Maturity Time
               </Label>
               <div
-                className={`bg-white/30 backdrop-blur-sm border border-white/40 rounded-xl p-4 ${
+                className={`bg-white/30 backdrop-blur-sm border border-white/40 rounded-xl ${
                   errors.maturityDate ? "border-red-400" : ""
                 }`}
               >
-                {/* Date Display */}
-                <div className="text-center mb-4">
-                  <div className="text-lg font-semibold text-gray-800">
-                    {isClient && currentDate
-                      ? format(currentDate, "MMMM dd, yyyy")
-                      : "Loading..."}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {isClient && currentDate ? format(currentDate, "EEEE") : ""}
-                  </div>
-                </div>
-
-                {/* Month/Year Selector */}
-                <div className="flex justify-between items-center mb-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (currentDate) {
-                        const newDate = new Date(currentDate);
-                        newDate.setMonth(newDate.getMonth() - 1);
-                        const today = new Date();
-                        const oneMonthFromNow = new Date(today);
-                        oneMonthFromNow.setMonth(today.getMonth() + 1);
-                        if (newDate >= oneMonthFromNow) {
-                          setCurrentDate(newDate);
-                          setFormData({ ...formData, maturityDate: newDate });
-                          // Clear error when user changes date
-                          if (errors.maturityDate) {
-                            setErrors({ ...errors, maturityDate: "" });
-                          }
-                        }
-                      }
-                    }}
-                    className="p-2 rounded-lg bg-white/40 border border-white/50 hover:bg-white/60 transition-colors"
-                  >
-                    <ArrowLeft className="w-4 h-4 text-gray-700" />
-                  </button>
-
-                  <div className="text-center">
-                    <div className="text-base font-medium text-gray-800">
-                      {isClient && currentDate
-                        ? format(currentDate, "MMMM yyyy")
-                        : ""}
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (currentDate) {
-                        const newDate = new Date(currentDate);
-                        newDate.setMonth(newDate.getMonth() + 1);
-                        setCurrentDate(newDate);
-                        setFormData({ ...formData, maturityDate: newDate });
-                        // Clear error when user changes date
-                        if (errors.maturityDate) {
-                          setErrors({ ...errors, maturityDate: "" });
-                        }
-                      }
-                    }}
-                    className="p-2 rounded-lg bg-white/40 border border-white/50 hover:bg-white/60 transition-colors"
-                  >
-                    <ArrowRight className="w-4 h-4 text-gray-700" />
-                  </button>
-                </div>
-
-                {/* Quick Date Options */}
-                <div className="space-y-2">
-                  <div className="text-xs font-medium text-gray-700 mb-2">
-                    Quick Select:
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { label: "1 Month", months: 1 },
-                      { label: "3 Months", months: 3 },
-                      { label: "6 Months", months: 6 },
-                      { label: "1 Year", months: 12 },
-                    ].map((option) => (
-                      <button
-                        key={option.label}
-                        type="button"
-                        onClick={() => {
-                          const today = new Date();
-                          const newDate = new Date(today);
-                          newDate.setMonth(today.getMonth() + option.months);
-                          setCurrentDate(newDate);
-                          setFormData({ ...formData, maturityDate: newDate });
-                          // Clear error when user changes date
-                          if (errors.maturityDate) {
-                            setErrors({ ...errors, maturityDate: "" });
-                          }
-                        }}
-                        className="py-2 px-3 text-sm rounded-lg bg-white/40 border border-white/50 hover:bg-orange-500/80 hover:text-white transition-all duration-200 text-gray-700"
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Custom Date Input */}
-                <div className="mt-4 pt-4 border-t border-white/40">
-                  <div className="text-xs font-medium text-gray-700 mb-2">
-                    Or choose specific date:
-                  </div>
+                <div className="border-t border-white/40">
                   <input
                     type="date"
                     value={
@@ -967,22 +858,37 @@ export default function CreatePlanPage({
               >
                 Penalty Fee (%)
               </Label>
-              <Input
-                id="penalty-fee"
-                type="number"
-                placeholder="5"
-                className={`bg-white/30 backdrop-blur-sm border-white/40 ${
-                  errors.penaltyFee ? "border-red-400 focus:border-red-500" : ""
+              <div
+                className={`bg-white/30 backdrop-blur-sm border border-white/40 rounded-xl p-4 ${
+                  errors.penaltyFee ? "border-red-400" : ""
                 }`}
-                value={formData.penaltyFee}
-                onChange={(e) => {
-                  setFormData({ ...formData, penaltyFee: e.target.value });
-                  // Clear error when user starts typing
-                  if (errors.penaltyFee) {
-                    setErrors({ ...errors, penaltyFee: "" });
-                  }
-                }}
-              />
+              >
+                <div className="grid grid-cols-3 gap-3">
+                  {[10, 20, 30].map((percentage) => (
+                    <button
+                      key={percentage}
+                      type="button"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          penaltyFee: percentage.toString(),
+                        });
+                        // Clear error when user selects an option
+                        if (errors.penaltyFee) {
+                          setErrors({ ...errors, penaltyFee: "" });
+                        }
+                      }}
+                      className={`py-3 px-4 text-sm font-medium rounded-lg border transition-all duration-200 ${
+                        formData.penaltyFee === percentage.toString()
+                          ? "bg-orange-500/80 text-white border-orange-400/50"
+                          : "bg-white/40 text-gray-700 border-white/50 hover:bg-orange-500/60 hover:text-white"
+                      }`}
+                    >
+                      {percentage}%
+                    </button>
+                  ))}
+                </div>
+              </div>
               {errors.penaltyFee && (
                 <p className="text-red-500 text-xs mt-1 font-medium">
                   {errors.penaltyFee}
@@ -1075,7 +981,9 @@ export default function CreatePlanPage({
                 <div className="flex justify-between items-center">
                   <span className="text-gray-700 text-sm">Penalty Fee:</span>
                   <span className="text-gray-800 font-medium">
-                    {formData.penaltyFee || "5"}%
+                    {formData.penaltyFee
+                      ? `${formData.penaltyFee}%`
+                      : "Not selected"}
                   </span>
                 </div>
               </div>
