@@ -22,13 +22,14 @@ export const APP_URL: string = process.env.NEXT_PUBLIC_URL!;
  * The name of the mini app as displayed to users.
  * Used in titles, headers, and app store listings.
  */
-export const APP_NAME = "bitsave-miniapp";
+export const APP_NAME = "BitSave";
 
 /**
  * A brief description of the mini app's functionality.
  * Used in app store listings and metadata.
  */
-export const APP_DESCRIPTION = "Save and earn in Crypto without losing to crypto market Volatility";
+export const APP_DESCRIPTION =
+  "Save and earn in Crypto without losing to crypto market Volatility";
 
 /**
  * The primary category for the mini app.
@@ -40,7 +41,14 @@ export const APP_PRIMARY_CATEGORY = "finance";
  * Tags associated with the mini app.
  * Used for search and discovery in app stores.
  */
-export const APP_TAGS = ["saving", "bitsave", "savefi", "yield", "vault", "stablecoins"];
+export const APP_TAGS = [
+  "saving",
+  "bitsave",
+  "savefi",
+  "yield",
+  "vault",
+  "stablecoins",
+];
 
 // --- Asset URLs ---
 /**
@@ -53,7 +61,7 @@ export const APP_ICON_URL: string = `${APP_URL}/icon.png`;
  * URL for the app's Open Graph image.
  * Used for social media sharing and previews.
  */
-export const APP_OG_IMAGE_URL: string = `${APP_URL}/api/opengraph-image`;
+export const APP_OG_IMAGE_URL: string = `${APP_URL}/opengraph-image.png`;
 
 /**
  * URL for the app's splash screen image.
@@ -65,14 +73,20 @@ export const APP_SPLASH_URL: string = `${APP_URL}/splash.png`;
  * Background color for the splash screen.
  * Used as fallback when splash image is loading.
  */
-export const APP_SPLASH_BACKGROUND_COLOR: string = "#f7f7f7";
+export const APP_SPLASH_BACKGROUND_COLOR: string = "#81D7B4";
 
 /**
  * Account association for the mini app.
  * Used to associate the mini app with a Farcaster account.
  * If not provided, the mini app will be unsigned and have limited capabilities.
  */
-export const APP_ACCOUNT_ASSOCIATION: AccountAssociation | undefined = undefined;
+export const APP_ACCOUNT_ASSOCIATION: AccountAssociation | undefined = {
+  header:
+    "eyJmaWQiOjg5MTM2MSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDIxRDE3N0ZmNzkzYkI4OGYyODAwZTlEYjFEMDVERDI3MzA0NkEzMzgifQ",
+  payload: "eyJkb21haW4iOiJiaXRzYXZlLW1pbmlhcHAudmVyY2VsLmFwcCJ9",
+  signature:
+    "MHg0OTI3MmYxMDRlNTA0YzMzZDk3MmI4ODk4MzRjNWMzYTI5MWJhMWFlYzdlMGJlNGI3MGUyZTczMmE5YzQxMWZiNTUzMzQ1ZWY0NDY3ZmY2MmVmMzRkNjE2ODA2MDRmMDc1ZGRiNTljN2MwZTcxZDcwZDc5MmUyNTk0NjIwZDU5MDFi",
+};
 
 // --- UI Configuration ---
 /**
@@ -129,7 +143,8 @@ export const SIGNED_KEY_REQUEST_VALIDATOR_EIP_712_DOMAIN = {
   name: "Farcaster SignedKeyRequestValidator",
   version: "1",
   chainId: 10,
-  verifyingContract: "0x00000000fc700472606ed4fa22623acf62c60553" as `0x${string}`,
+  verifyingContract:
+    "0x00000000fc700472606ed4fa22623acf62c60553" as `0x${string}`,
 };
 
 // PLEASE DO NOT UPDATE THIS
